@@ -1,11 +1,11 @@
-package ui.common {
+package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Событие выбора значения из списка
-	 * 
-	 * @version  1.0.1
+	 *
+	 * @version  1.0.2
 	 * @author   meps
 	 */
 	public class CGEventSelect extends CGEvent {
@@ -17,13 +17,13 @@ package ui.common {
 		public static const CHANGE:String = "select_change";
 		
 		public function CGEventSelect(type:String, value:*) {
-			m_value = value;
+			mValue = value;
 			super(type);
 		}
 		
 		/** Выбранное значение */
 		public function get value():* {
-			return m_value;
+			return mValue;
 		}
 		
 		override public function toString():String {
@@ -32,7 +32,7 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_value:*;
+		private var mValue:*;
 		
 	}
 }

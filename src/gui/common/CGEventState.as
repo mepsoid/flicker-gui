@@ -1,6 +1,6 @@
-package ui.common {
+package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Событие смены состояния элемента интерфейса
@@ -23,13 +23,13 @@ package ui.common {
 		public static const LABEL:String = "state_label";
 		
 		public function CGEventState(type:String, state:String) {
-			m_state = state;
+			mState = state;
 			super(type);
 		}
 		
 		/** Установленное состояние элемента */
 		public function get state():String {
-			return m_state;
+			return mState;
 		}
 		
 		override public function toString():String {
@@ -38,7 +38,7 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_state:String;
+		private var mState:String;
 		
 	}
 }

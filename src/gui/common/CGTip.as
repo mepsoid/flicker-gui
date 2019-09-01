@@ -1,29 +1,26 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
-	import flash.display.DisplayObjectContainer;
 	import flash.display.MovieClip;
-	import flash.events.MouseEvent;
 	import flash.events.TimerEvent;
-	import flash.geom.Point;
 	import flash.utils.Timer;
 	
 	/**
 	 * Тултип
 	 * 
-	 * @version  1.0.5
+	 * @version  1.0.6
 	 * @author   meps
 	 */
 	public class CGTip extends CGInteractive {
 		
 		public function CGTip(src:* = null, name:String = null, txt:String = null) {
-			m_show = false;
+			mShow = false;
 			if (!name)
 				name = TIP_ID;
 			super(src, name);
 			if (txt)
 				text = txt;
-			m_timer = new Timer(1); // первоначальный интервал не имеет значения
-			m_timer.addEventListener(TimerEvent.TIMER, onTimer);
+			mTimer = new Timer(1); // первоначальный интервал не имеет значения
+			mTimer.addEventListener(TimerEvent.TIMER, onTimer);
 			constDefault(SHOW_CONST, SHOW_DEFAULT.toString());
 			constDefault(HIDE_CONST, HIDE_DEFAULT.toString());
 		}
@@ -40,10 +37,10 @@
 		/** Отобразить тултип */
 		public function show():void {
 			var time:int = parseInt(constGet(SHOW_CONST));
-			if (time > 0 && !m_timer.running) {
-				m_timer.delay = time;
-				m_timer.stop();
-				m_timer.start();
+			if (time > 0 && !mTimer.running) {
+				mTimer.delay = time;
+				mTimer.stop();
+				mTimer.start();
 			} else {
 				doShow();
 			}
@@ -52,32 +49,32 @@
 		/** Скрыть тултип */
 		public function hide():void {
 			var time:int = parseInt(constGet(HIDE_CONST));
-			if (time > 0 && !m_timer.running) {
-				m_timer.delay = time;
-				m_timer.stop();
-				m_timer.start();
+			if (time > 0 && !mTimer.running) {
+				mTimer.delay = time;
+				mTimer.stop();
+				mTimer.start();
 			} else {
 				doHide();
 			}
 		}
 		
 		public function get isShow():Boolean {
-			return m_show;
+			return mShow;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
 		override protected function onDestroy():void {
 			CGTipManager.instance.tipRemove(this);
-			m_timer.stop();
-			m_timer.removeEventListener(TimerEvent.TIMER, onTimer);
-			m_timer = null;
+			mTimer.stop();
+			mTimer.removeEventListener(TimerEvent.TIMER, onTimer);
+			mTimer = null;
 			super.onDestroy();
 		}
 		
 		override protected function onClipAppend(mc:MovieClip):void {
 			super.onClipAppend(mc);
-			if (m_show)
+			if (mShow)
 				CGTipManager.instance.tipAdd(this);
 			else
 				// временно просто спрятать клип
@@ -90,33 +87,33 @@
 		}
 		
 		override protected function doStateValue():String {
-			return m_show ? SHOW_STATE : HIDE_STATE;
+			return mShow ? SHOW_STATE : HIDE_STATE;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Фактическое отображение тултипа */
 		private function doShow():void {
-			m_timer.stop();
-			m_show = true;
+			mTimer.stop();
+			mShow = true;
 			doState();
 			CGTipManager.instance.tipAdd(this);
-			eventSend(new CGEventSwitch(CGEventSwitch.SHOW, m_show));
+			eventSend(new CGEventSwitch(CGEventSwitch.SHOW, mShow));
 		}
 		
 		/** Фактическое скрытие тултипа */
 		private function doHide():void {
-			m_timer.stop();
-			m_show = false;
+			mTimer.stop();
+			mShow = false;
 			CGTipManager.instance.tipRemove(this);
 			doState();
-			eventSend(new CGEventSwitch(CGEventSwitch.SHOW, m_show));
+			eventSend(new CGEventSwitch(CGEventSwitch.SHOW, mShow));
 		}
 		
 		/** Обработчик автоматического включения отображения и скрытия */
 		private function onTimer(e:TimerEvent):void {
-			m_timer.stop();
-			if (m_show) {
+			mTimer.stop();
+			if (mShow) {
 				// завершено время отображения
 				doHide();
 			} else {
@@ -124,18 +121,16 @@
 				doShow();
 				var time:int = parseInt(constGet(HIDE_CONST));
 				if (time > 0) {
-					m_timer.delay = time;
-					m_timer.start();
+					mTimer.delay = time;
+					mTimer.start();
 				}
 			}
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_show:Boolean; // флаг отображения тултипа
-		private var m_timer:Timer; // таймер ожидания переключения состояний тултипа
-		//private var m_delayShow:int; // время перед автоматическим отображением
-		//private var m_delayHide:int; // время перед автоматическим удалением
+		private var mShow:Boolean; // флаг отображения тултипа
+		private var mTimer:Timer; // таймер ожидания переключения состояний тултипа
 		
 		private static const SHOW_STATE:String = "show";
 		private static const HIDE_STATE:String = "hide";

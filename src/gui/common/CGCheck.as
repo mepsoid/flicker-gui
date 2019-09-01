@@ -1,32 +1,32 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Чекбокс
-	 * 
-	 * @version  1.0.5
+	 *
+	 * @version  1.0.6
 	 * @author   meps
 	 */
 	public class CGCheck extends CGButton {
 		
 		public function CGCheck(src:* = null, name:String = null, lab:String = null) {
-			m_select = false;
+			mSelect = false;
 			super(src, name, lab);
 		}
 		
 		/** Флаг включенного состояния чекбокса */
 		public function get select():Boolean {
-			return m_select;
+			return mSelect;
 		}
 		
 		public function set select(val:Boolean):void {
-			if (m_select == val)
+			if (mSelect == val)
 				return;
-			m_select = val;
+			mSelect = val;
 			doState();
 			onSelect();
-			eventSend(new CGEventSelect(CGEventSelect.SELECT, m_select));
+			eventSend(new CGEventSelect(CGEventSelect.SELECT, mSelect));
 		}
 		
 		override public function toString():String {
@@ -38,7 +38,7 @@
 		override protected function doStateValue():String {
 			return super.doStateValue() +
 				"_" +
-				(m_select ? STATE_SELECT : STATE_REGULAR);
+				(mSelect ? STATE_SELECT : STATE_REGULAR);
 		}
 		
 		override protected function doButtonClick():void {
@@ -51,7 +51,7 @@
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_select:Boolean;
+		private var mSelect:Boolean;
 		
 		private static const STATE_SELECT:String  = "select";
 		private static const STATE_REGULAR:String = "regular";

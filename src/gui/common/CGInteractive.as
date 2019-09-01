@@ -1,42 +1,45 @@
-﻿package ui.common {
+﻿package framework.gui {
+	
+	import app.gui.common.richtext.CGProtoWithRichText;
 	
 	import flash.display.MovieClip;
+	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
-	import services.printClass;
+	
+	import framework.utils.printClass;
 	
 	/**
 	 * Класс интерактивного элемента интерфейса
 	 * 
-	 * @version  1.0.7
+	 * @version  1.0.10
 	 * @author   meps
 	 */
-	public class CGInteractive extends CGProto {
+	public class CGInteractive extends CGProtoWithRichText {
 		
 		public function CGInteractive(src:* = null, name:String = null) {
-			//log.write("#", "CGInteractive::constructor", src, name);
-			m_over = false;
-			m_down = false;
+			mOver = false;
+			mDown = false;
 			super(src, name);
 		}
 		
 		/** Нахождение курсора над элементом */
 		public function get over():Boolean {
-			return m_over;
+			return mOver;
 		}
 		
 		/** Нажатие на элемент */
 		public function get down():Boolean {
-			return m_down;
+			return mDown;
 		}
 		
 		/** Тултип элемента */
 		public function get tip():CGTip {
-			return m_tip;
+			return mTip;
 		}
 		
 		public function set tip(val:CGTip):void {
-			m_tip = val;
+			mTip = val;
 		}
 		
 		override public function toString():String {
@@ -52,10 +55,12 @@
 				mc.hitArea = hit;
 			else
 				mc.hitArea = null;
-			mc.addEventListener(MouseEvent.ROLL_OVER, onClipMouse, false, 0, true);
-			mc.addEventListener(MouseEvent.ROLL_OUT, onClipMouse, false, 0, true);
-			mc.addEventListener(MouseEvent.MOUSE_DOWN, onClipMouse, false, 0, true);
-			mc.addEventListener(MouseEvent.MOUSE_UP, onClipMouse, false, 0, true);
+			mc.addEventListener(MouseEvent.ROLL_OVER, onClipMouse);
+			mc.addEventListener(MouseEvent.ROLL_OUT, onClipMouse);
+			mc.addEventListener(MouseEvent.MOUSE_DOWN, onClipMouse);
+			mc.addEventListener(MouseEvent.MOUSE_UP, onClipMouse);
+			mc.addEventListener(Event.ADDED_TO_STAGE, onClipAdded);
+			mc.addEventListener(Event.REMOVED_FROM_STAGE, onClipRemoved);
 		}
 		
 		override protected function onClipRemove(mc:MovieClip):void {
@@ -64,45 +69,52 @@
 			mc.removeEventListener(MouseEvent.ROLL_OUT, onClipMouse);
 			mc.removeEventListener(MouseEvent.MOUSE_DOWN, onClipMouse);
 			mc.removeEventListener(MouseEvent.MOUSE_UP, onClipMouse);
+			mc.removeEventListener(Event.ADDED_TO_STAGE, onClipAdded);
+			mc.removeEventListener(Event.REMOVED_FROM_STAGE, onClipRemoved);
 			super.onClipRemove(mc);
 		}
 		
 		override protected function onDestroy():void {
-			if (m_tip) {
-				m_tip.destroy();
-				m_tip = null;
+			if (mTip) {
+				mTip.destroy();
+				mTip = null;
 			}
 			if (clip) {
-				clip.removeEventListener(MouseEvent.ROLL_OVER, onClipMouse);
-				clip.removeEventListener(MouseEvent.ROLL_OUT, onClipMouse);
-				clip.removeEventListener(MouseEvent.MOUSE_DOWN, onClipMouse);
-				clip.removeEventListener(MouseEvent.MOUSE_UP, onClipMouse);
+				var mc:MovieClip = objectFind(HIT_ID) as MovieClip;
+				if (!mc)
+					mc = clip;
+				mc.removeEventListener(MouseEvent.ROLL_OVER, onClipMouse);
+				mc.removeEventListener(MouseEvent.ROLL_OUT, onClipMouse);
+				mc.removeEventListener(MouseEvent.MOUSE_DOWN, onClipMouse);
+				mc.removeEventListener(MouseEvent.MOUSE_UP, onClipMouse);
+				mc.removeEventListener(Event.ADDED_TO_STAGE, onClipAdded);
+				mc.removeEventListener(Event.REMOVED_FROM_STAGE, onClipRemoved);
 			}
 			super.onDestroy();
 		}
 		
 		protected function onClipMouse(event:MouseEvent):void {
 			if (event.type == MouseEvent.ROLL_OVER) {
-				m_over = true;
+				mOver = true;
 				doState();
-				eventSend(new CGEvent(CGEvent.OVER));
-				if (m_tip)
-					m_tip.show();
+				eventSend(EVENT_OVER);
+				if (mTip)
+					mTip.show();
 			} else if (event.type == MouseEvent.ROLL_OUT) {
-				m_over = false;
-				m_down = false;
+				mOver = false;
+				mDown = false;
 				doState();
-				eventSend(new CGEvent(CGEvent.OUT));
-				if (m_tip)
-					m_tip.hide();
+				eventSend(EVENT_OUT);
+				if (mTip)
+					mTip.hide();
 			} else if (event.type == MouseEvent.MOUSE_DOWN) {
-				m_down = true;
+				mDown = true;
 				doState();
-				eventSend(new CGEvent(CGEvent.DOWN));
+				eventSend(EVENT_DOWN);
 			} else if (event.type == MouseEvent.MOUSE_UP) {
-				m_down = false;
+				mDown = false;
 				doState();
-				eventSend(new CGEvent(CGEvent.UP));
+				eventSend(EVENT_UP);
 			}
 		}
 		
@@ -110,21 +122,39 @@
 		protected function checkToHit(mc:MovieClip):void {
 			if (mc && mc.stage) {
 				var rect:Rectangle = mc.getRect(mc.stage);
-				if (rect.contains(mc.stage.mouseX, mc.stage.mouseY)) {
-					m_over = mc.hitTestPoint(mc.mouseX, mc.mouseY, true);
+				var mouseX:Number = mc.stage.mouseX;
+				var mouseY:Number = mc.stage.mouseY;
+				if (rect.contains(mouseX, mouseY)) {
+					mOver = mc.hitTestPoint(mouseX, mouseY, true);
 				} else {
-					m_over = false;
+					mOver = false;
 				}
 			} else {
-				m_over = false;
+				mOver = false;
 			}
+		}
+		
+		private function onClipAdded(event:Event):void {
+			var hitMc:MovieClip = objectFind(HIT_ID) as MovieClip;
+			if (!hitMc)
+				hitMc = clip;
+			checkToHit(hitMc);
+		}
+		
+		private function onClipRemoved(event:Event):void {
+			mOver = false;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		protected var m_over:Boolean;
-		protected var m_down:Boolean;
-		protected var m_tip:CGTip;
+		protected var mOver:Boolean;
+		protected var mDown:Boolean;
+		protected var mTip:CGTip;
+		
+		private const EVENT_OVER:CGEvent = new CGEvent(CGEvent.OVER);
+		private const EVENT_OUT:CGEvent = new CGEvent(CGEvent.OUT);
+		private const EVENT_DOWN:CGEvent = new CGEvent(CGEvent.DOWN);
+		private const EVENT_UP:CGEvent = new CGEvent(CGEvent.UP);
 		
 		protected static const HIT_ID:String = ".hit";
 		

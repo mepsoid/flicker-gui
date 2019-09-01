@@ -1,4 +1,4 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.DisplayObject;
 	import flash.display.InteractiveObject;
@@ -6,17 +6,18 @@ package ui.common {
 	import flash.display.Stage;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
-	import flash.events.TimerEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.utils.getTimer;
-	import flash.utils.Timer;
-	import services.printClass;
+	
+	import framework.utils.printClass;
+	
+	import ru.uns.dragons.commands.net.socket.country.UnsubscribeMapUpdates;
 	
 	/**
 	 * Скролл бар на основе разделенных клипов
-	 * 
-	 * @version  1.1.10
+	 *
+	 * @version  1.1.12
 	 * @author   meps
 	 */
 	public class CGScrollSeparate extends CGSeparate {
@@ -31,31 +32,39 @@ package ui.common {
 		public static const COMPLETE:String = "scroll_complete";
 		
 		public function CGScrollSeparate(src:* = null, name:String = null) {
-			m_discrete = false
-			m_enable = true;
-			m_size = 1.0;
-			m_position = 0.0;
-			m_positionTarget = 0.0;
-			m_step = 0.1;
-			m_length = 0.0;
-			m_offsetRatio = 0.0;
+			mDiscrete = false
+			mEnable = true;
+			mSize = 1.0;
+			mPosition = 0.0;
+			mPositionTarget = 0.0;
+			mStep = 0.1;
+			mLength = 0.0;
+			mOffsetRatio = 0.0;
 			super(src, name);
 			// кнопка предыдущей позиции
-			m_butPrev = new CGButton(this, m_name + PREV_SUFFIX);
-			m_butPrev.eventSign(true, CGEvent.CLICK, onButtonPrev);
-			m_butPrev.delayWait = DELAY_WAIT;
-			m_butPrev.delayRate = DELAY_RATE;
-			m_butPrev.enable = m_enable;
+			mButPrev = new CGButton(this, mName + PREV_SUFFIX);
+			mButPrev.eventSign(true, CGEvent.CLICK, onButtonPrev);
+			mButPrev.delayWait = DELAY_WAIT;
+			mButPrev.delayRate = DELAY_RATE;
+			mButPrev.enable = mEnable;
 			// кнопка следующей позиции
-			m_butNext = new CGButton(this, m_name + NEXT_SUFFIX);
-			m_butNext.eventSign(true, CGEvent.CLICK, onButtonNext);
-			m_butNext.delayWait = DELAY_WAIT;
-			m_butNext.delayRate = DELAY_RATE;
-			m_butNext.enable = m_enable;
+			mButNext = new CGButton(this, mName + NEXT_SUFFIX);
+			mButNext.eventSign(true, CGEvent.CLICK, onButtonNext);
+			mButNext.delayWait = DELAY_WAIT;
+			mButNext.delayRate = DELAY_RATE;
+			mButNext.enable = mEnable;
+			// кнопка начала списка
+			mButFirst = new CGButton(this, mName + FIRST_SUFFIX);
+			mButFirst.eventSign(true, CGEvent.CLICK, onButtonFirst);
+			mButFirst.enable = mEnable;
+			// кнопка конца списка
+			mButLast = new CGButton(this, mName + LAST_SUFFIX);
+			mButLast.eventSign(true, CGEvent.CLICK, onButtonLast);
+			mButLast.enable = mEnable;
 			// кнопка бегунок
-			m_butSlider = new CGButton(this, m_name + SLIDER_SUFFIX);
-			m_butSlider.enable = m_enable;
-			m_butSlider.eventSign(true, CGEvent.DOWN, onButtonSlider);
+			mButSlider = new CGButton(this, mName + SLIDER_SUFFIX);
+			mButSlider.enable = mEnable;
+			mButSlider.eventSign(true, CGEvent.DOWN, onButtonSlider);
 			// все перерисовать
 			wheelSubscribe();
 			redrawButtons();
@@ -64,47 +73,47 @@ package ui.common {
 		
 		/** Активность элемента */
 		public function get enable():Boolean {
-			return m_enable;
+			return mEnable;
 		}
 		
 		public function set enable(val:Boolean):void {
-			if (val == m_enable)
+			if (val == mEnable)
 				return;
-			m_enable = val;
+			mEnable = val;
 			redrawButtons();
 		}
 		
 		/** Размер отображаемого фрагмента */
 		public function get size():Number {
-			return m_size;
+			return mSize;
 		}
 		
 		public function set size(val:Number):void {
 			if (val < 0.0)
 				val = 0.0;
-			if (m_discrete) {
-				if (val > m_length)
-					val = m_length;
+			if (mDiscrete) {
+				if (val > mLength)
+					val = mLength;
 				val = int(val);
 			} else {
 				if (val > 1.0)
 					val = 1.0;
 			}
-			if (val == m_size)
+			if (val == mSize)
 				return;
-			m_size = val;
-			if (m_discrete) {
-				if (m_position > m_length - m_size) {
-					positionSet(m_length - m_size);
-					targetSet(m_position); // привести целевую позицию к текущей
+			mSize = val;
+			if (mDiscrete) {
+				if (mPosition > mLength - mSize) {
+					positionSet(mLength - mSize);
+					targetSet(mPosition); // привести целевую позицию к текущей
 				} else {
 					redrawButtons();
 					redrawScroller();
 				}
 			} else {
-				if (m_position > 1.0 - m_size) {
-					positionSet(1.0 - m_size);
-					targetSet(m_position); // привести целевую позицию к текущей
+				if (mPosition > 1.0 - mSize) {
+					positionSet(1.0 - mSize);
+					targetSet(mPosition); // привести целевую позицию к текущей
 				} else {
 					redrawButtons();
 					redrawScroller();
@@ -115,74 +124,74 @@ package ui.common {
 		
 		/** Положение скроллера */
 		public function get position():Number {
-			return m_position;
+			return mPosition;
 		}
 		
 		public function set position(val:Number):void {
 			positionSet(val);
-			targetSet(m_position); // привести целевую позицию к текущей
+			targetSet(mPosition); // привести целевую позицию к текущей
 			eventSend(new CGEvent(COMPLETE));
 		}
 		
 		/** Шаг изменения при нажатии на кнопки */
 		public function get step():Number {
-			return m_step;
+			return mStep;
 		}
 		
 		public function set step(val:Number):void {
 			if (val < 0.0)
 				val = 0.0;
-			if (m_discrete) {
+			if (mDiscrete) {
 				val = int(val);
 			} else {
 				if (val > 1.0)
 					val = 1.0;
 			}
-			if (val == m_step)
+			if (val == mStep)
 				return;
-			m_step = val;
+			mStep = val;
 		}
 		
 		/** Полная длина списка */
 		public function get length():Number {
-			if (m_discrete)
-				return m_length;
+			if (mDiscrete)
+				return mLength;
 			return 1.0;
 		}
 		
 		public function set length(val:Number):void {
-			if (!m_discrete)
+			if (!mDiscrete)
 				return;
-			if (val == m_length)
+			if (val == mLength)
 				return;
-			m_length = val;
+			mLength = val;
 			redrawButtons();
 			redrawScroller();
 		}
 		
 		/** Дискретный скроллер, все положения и размеры целые числа */
 		public function get discrete():Boolean {
-			return m_discrete;
+			return mDiscrete;
 		}
 		
 		public function set discrete(val:Boolean):void {
-			if (val == m_discrete)
+			if (val == mDiscrete)
 				return;
-			m_discrete = val;
+			mDiscrete = val;
 			redrawButtons();
 			redrawScroller();
 		}
 		
 		public function get buttonPrev():CGButton {
-			return m_butPrev;
+			return mButPrev;
 		}
 		
 		public function get buttonNext():CGButton {
-			return m_butNext;
+			return mButNext;
 		}
 		
 		public function get buttonSlider():CGButton {
-			return m_butSlider;
+			return mButSlider;
 		}
 		
 		override public function toString():String {
@@ -194,25 +203,29 @@ package ui.common {
 		override protected function onDestroy():void {
 			wheelUnsubscribe();
 			frameUnsubscribe();
-			m_butPrev.destroy();
-			m_butPrev = null;
-			m_butNext.destroy();
-			m_butNext = null;
-			m_butSlider.destroy();
-			m_butSlider = null;
-			if (m_clipArea) {
-				var stage:Stage = m_clipArea.stage;
+			mButPrev.destroy();
+			mButPrev = null;
+			mButNext.destroy();
+			mButNext = null;
+			mButFirst.destroy();
+			mButFirst = null;
+			mButLast.destroy();
+			mButLast = null;
+			mButSlider.destroy();
+			mButSlider = null;
+			if (mClipArea) {
+				var stage:Stage = mClipArea.stage;
 				if (stage) {
 					stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 					stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
 				}
-				m_clipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-				m_clipArea.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
-				m_clipArea = null;
+				mClipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+				mClipArea.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+				mClipArea = null;
 			}
-			if (m_clipWheel) {
-				m_clipWheel.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
-				m_clipWheel = null;
+			if (mClipWheel) {
+				mClipWheel.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+				mClipWheel = null;
 			}
 			super.onDestroy();
 		}
@@ -220,26 +233,30 @@ package ui.common {
 		override protected function doClipProcess():void {
 			super.doClipProcess();
 			// обновить активную область
-			var area:InteractiveObject = objectFind(m_name + AREA_SUFFIX) as InteractiveObject;
-			if (m_clipArea !== area) {
-				if (m_clipArea) {
-					m_clipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-					m_clipArea.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+			var area:InteractiveObject = objectFind(mName + AREA_SUFFIX) as InteractiveObject;
+			if (mClipArea !== area) {
+				if (mClipArea) {
+					mClipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+					mClipArea.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 				}
-				m_clipArea = area;
-				if (m_clipArea) {
-					m_clipArea.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown, false, 0, true);
-					m_clipArea.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
+				mClipArea = area;
+				if (mClipArea) {
+					mClipArea.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown, false, 0, true);
+					mClipArea.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
 				}
 			}
 			// обновить область скроллинга
-			var wheel:InteractiveObject = objectFind(m_name + WHEEL_SUFFIX) as InteractiveObject;
-			if (m_clipWheel !== wheel) {
-				if (m_clipWheel)
-					m_clipWheel.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
-				m_clipWheel = wheel;
-				if (m_clipWheel)
-					m_clipWheel.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
+			var wheelClip:InteractiveObject = objectFind(mName + WHEEL_SUFFIX) as InteractiveObject
+			
+			var wheel:InteractiveObject;
+			if(wheelClip)
+				wheel = wheelClip.parent;
+			if (mClipWheel !== wheel) {
+				if (mClipWheel)
+					mClipWheel.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+				mClipWheel = wheel;
+				if (mClipWheel)
+					mClipWheel.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
 			}
 			// перерисовать скроллер
 			redrawScroller();
@@ -257,17 +274,17 @@ package ui.common {
 		private function positionSet(val:Number):void {
 			if (val <= EPSILON)
 				val = 0.0;
-			if (m_discrete) {
-				if (val >= (m_length - EPSILON - m_size))
-					val = m_length - m_size;
+			if (mDiscrete) {
+				if (val >= (mLength - EPSILON - mSize))
+					val = mLength - mSize;
 				val = int(val);
 			} else {
-				if (val >= (1.0 - EPSILON - m_size))
-					val = 1.0 - m_size;
+				if (val >= (1.0 - EPSILON - mSize))
+					val = 1.0 - mSize;
 			}
-			if (val == m_position)
+			if (val == mPosition)
 				return;
-			m_position = val;
+			mPosition = val;
 			redrawButtons();
 			redrawScroller();
 			eventSend(new CGEvent(POSITION));
@@ -277,77 +294,81 @@ package ui.common {
 		private function targetSet(val:Number):void {
 			if (val <= EPSILON)
 				val = 0.0;
-			if (m_discrete) {
-				if (val >= (m_length - EPSILON - m_size))
-					val = m_length - m_size;
+			if (mDiscrete) {
+				if (val >= (mLength - EPSILON - mSize))
+					val = mLength - mSize;
 				val = int(val);
 			} else {
-				if (val >= (1.0 - EPSILON - m_size))
-					val = 1.0 - m_size;
+				if (val >= (1.0 - EPSILON - mSize))
+					val = 1.0 - mSize;
 			}
-			if (val == m_position) {
+			if (val == mPosition) {
 				// не начинать никакого плавного движения, позиция и так совпала с текущей
 				frameUnsubscribe();
-				m_positionTarget = val;
+				mPositionTarget = val;
 				return;
 			}
 			// пересчитать ускорение и время
-			m_timeLast = getTimer();
-			if (m_timeLast > m_timeTarget)
+			mTimeLast = getTimer();
+			if (mTimeLast > mTimeTarget)
 				// если предыдущее движение уже было завершено, снова подписаться на обновление кадров
 				frameSubscribe();
-			m_timeTarget = m_timeLast + WHEEL_TIME;
-			m_positionTarget = val;
-			m_positionAccel = 2.0 * (m_position - m_positionTarget) / (WHEEL_TIME * WHEEL_TIME);
-			m_positionSpeed = -m_positionAccel * WHEEL_TIME;
+			mTimeTarget = mTimeLast + WHEEL_TIME;
+			mPositionTarget = val;
+			mPositionAccel = 2.0 * (mPosition - mPositionTarget) / (WHEEL_TIME * WHEEL_TIME);
+			mPositionSpeed = -mPositionAccel * WHEEL_TIME;
 		}
 		
 		/** Перерисовать состояние кнопок */
 		private function redrawButtons():void {
-			var ready:Boolean;
-			if (m_discrete) {
-				ready = m_enable && (m_size < m_length);
-				m_butPrev.enable = ready && (m_position > 0.0);
-				m_butNext.enable = ready && (m_position < m_length - m_size);
+			var ready:Boolean, forward:Boolean, back:Boolean;
+			if (mDiscrete) {
+				ready = mEnable && (mSize < mLength);
+				back = ready && (mPosition > 0.0);
+				forward = ready && (mPosition < mLength - mSize);
 			} else {
-				ready = m_enable && (m_size < 1.0);
-				m_butPrev.enable = ready && (m_position > 0.0);
-				m_butNext.enable = ready && (m_position < 1.0 - m_size);
+				ready = mEnable && (mSize < 1.0);
+				back = ready && (mPosition > 0.0);
+				forward = ready && (mPosition < 1.0 - mSize);
 			}
-			m_butSlider.enable = ready;
-			iconSet(m_enable ? COMMON_STATE : DISABLE_STATE, m_name + BACK_SUFFIX);
+			mButPrev.enable = back;
+			mButNext.enable = forward;
+			mButFirst.enable = back;
+			mButLast.enable = forward;
+			mButSlider.enable = ready;
+			iconSet(mEnable ? COMMON_STATE : DISABLE_STATE, mName + BACK_SUFFIX);
 		}
 		
 		/** Перерисовать положение бегунка */
 		private function redrawScroller():void {
-			if (!m_clipArea)
+			if (!mClipArea)
 				return;
-			var areaBounds:Rectangle = m_clipArea.getRect(m_clipArea.parent);
+			var areaBounds:Rectangle = mClipArea.getRect(mClipArea.parent);
 			// спозиционировать бегунок по области
-			if (m_butSlider) {
-				var slider:MovieClip = m_butSlider.clip;
+			if (mButSlider) {
+				var slider:MovieClip = mButSlider.clip;
 				if (slider) {
 					if (areaBounds.width > areaBounds.height) {
 						// горизонтальный трекбар
 						slider.y = areaBounds.top;
 						slider.height = areaBounds.height;
-						if (m_discrete) {
-							slider.x = m_position / m_length * areaBounds.width + areaBounds.left;
-							slider.width = m_size / m_length * areaBounds.width;
+						if (mDiscrete) {
+							slider.x = mPosition / mLength * areaBounds.width + areaBounds.left;
+							slider.width = mSize / mLength * areaBounds.width;
 						} else {
-							slider.x = m_position * areaBounds.width + areaBounds.left;
-							slider.width = m_size * areaBounds.width;
+							slider.x = mPosition * areaBounds.width + areaBounds.left;
+							slider.width = mSize * areaBounds.width;
 						}
 					} else {
 						// вертикальный трекбар
 						slider.x = areaBounds.left;
 						slider.width = areaBounds.width;
-						if (m_discrete) {
-							slider.y = m_position / m_length * areaBounds.height + areaBounds.top;
-							slider.height = m_size / m_length * areaBounds.height;
+						if (mDiscrete) {
+							slider.y = mPosition / mLength * areaBounds.height + areaBounds.top;
+							slider.height = mSize / mLength * areaBounds.height;
 						} else {
-							slider.y = m_position * areaBounds.height + areaBounds.top;
-							slider.height = m_size * areaBounds.height;
+							slider.y = mPosition * areaBounds.height + areaBounds.top;
+							slider.height = mSize * areaBounds.height;
 						}
 					}
 				}
@@ -356,14 +377,14 @@ package ui.common {
 		
 		/** Передвинуть на шаг к началу */
 		private function doPrevStep():void {
-			positionSet(m_position - m_step);
-			targetSet(m_position); // привести целевую позицию к текущей
+			positionSet(mPosition - mStep);
+			targetSet(mPosition); // привести целевую позицию к текущей
 		}
 		
 		/** Передвинуть на шаг к концу */
 		private function doNextStep():void {
-			positionSet(m_position + m_step);
-			targetSet(m_position); // привести целевую позицию к текущей
+			positionSet(mPosition + mStep);
+			targetSet(mPosition); // привести целевую позицию к текущей
 		}
 		
 		/** Обработчик кнопки назад */
@@ -376,45 +397,71 @@ package ui.common {
 			doNextStep();
 		}
 		
+		/** Обработчик кнопки начала списка */
+		private function onButtonFirst(event:CGEvent):void {
+			positionSet(0.0);
+			targetSet(mPosition); // привести целевую позицию к текущей
+		}
+		
+		/** Обработчик кнопки конца списка */
+		private function onButtonLast(event:CGEvent):void {
+			positionSet(1.0);
+			targetSet(mPosition); // привести целевую позицию к текущей
+		}
+		
 		/** Обработчик нажатия на бегунок */
 		private function onButtonSlider(event:CGEvent):void {
-			if (!m_clipArea)
+			if (!mClipArea)
 				return;
-			var stage:Stage = m_clipArea.stage;
+			var stage:Stage = mClipArea.stage;
 			var coord:Point = new Point(stage.mouseX, stage.mouseY);
-			var bounds:Rectangle = m_clipArea.getRect(stage);
+			var bounds:Rectangle = mClipArea.getRect(stage);
 			var ratio:Number = pointRatio(bounds, coord);
-			m_offsetRatio = ratio - m_position - m_size * 0.5;
+			mOffsetRatio = ratio - mPosition - mSize * 0.5;
 			// первое нажатие было на скроллере
 			stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp, false, 0, true);
 			stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove, false, 0, true);
+			mButSlider.eventSign(true, CGEvent.UP, onSliderMouseUp);
 		}
 		
 		/** Обработчик колеса мыши */
 		private function onMouseWheel(event:MouseEvent):void {
-			if (!m_enable)
+			if (!mEnable)
 				return;
 			if (event.delta > 0) {
-				if (m_discrete)
+				if (mDiscrete)
 					doPrevStep();
 				else
-					targetSet(m_positionTarget - m_step);
+					targetSet(mPositionTarget - mStep);
 			} else if (event.delta < 0) {
-				if (m_discrete)
+				if (mDiscrete)
 					doNextStep();
 				else
-					targetSet(m_positionTarget + m_step);
+					targetSet(mPositionTarget + mStep);
 			}
 		}
 		
 		/** Обработчик отпускания кнопки на бегунке */
+		private function onSliderMouseUp(event:CGEvent):void {
+			if (!mClipArea)
+				return;
+			var stage:Stage = mClipArea.stage;
+			mButSlider.eventSign(false, CGEvent.UP, onSliderMouseUp);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+			stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+			eventSend(new CGEvent(COMPLETE));
+			mOffsetRatio = 0.0;
+		}
+		
+		/** Обработчик отпускания кнопки на stage */
 		private function onMouseUp(event:MouseEvent):void {
 			var stage:Stage = (event.target as DisplayObject).stage;
 			// завершить перетаскивание скроллера
 			stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 			stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+			mButSlider.eventSign(false, CGEvent.UP, onSliderMouseUp);
 			eventSend(new CGEvent(COMPLETE));
-			m_offsetRatio = 0.0;
+			mOffsetRatio = 0.0;
 		}
 		
 		/** Обработчик нажатия на область */
@@ -425,14 +472,14 @@ package ui.common {
 		
 		/** Обработчик перемещения курсора мыши */
 		private function onMouseMove(event:MouseEvent):void {
-			if (!m_clipArea || !m_enable)
+			if (!mClipArea || !mEnable)
 				return;
 			var coord:Point = new Point(event.stageX, event.stageY);
-			var bounds:Rectangle = m_clipArea.getRect(m_clipArea.stage);
+			var bounds:Rectangle = mClipArea.getRect(mClipArea.stage);
 			var ratio:Number = pointRatio(bounds, coord);
 			// перетаскивать скроллер
-			positionSet(ratio - m_offsetRatio - m_size * 0.5);
-			targetSet(m_position); // привести целевую позицию к текущей
+			positionSet(ratio - mOffsetRatio - mSize * 0.5);
+			targetSet(mPosition); // привести целевую позицию к текущей
 		}
 		
 		/** Вычислить линейное соотношение нажатия относительно активной области */
@@ -450,87 +497,105 @@ package ui.common {
 		/** Дополнить кнопки подписками на колесо */
 		private function wheelSubscribe():void {
 			var but:MovieClip;
-			if (m_butPrev) {
-				but = m_butPrev.clip;
+			if (mButPrev) {
+				but = mButPrev.clip;
 				if (but)
 					but.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
 			}
-			if (m_butNext) {
-				but = m_butNext.clip;
+			if (mButNext) {
+				but = mButNext.clip;
 				if (but)
 					but.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
 			}
-			if (m_butSlider) {
-				but = m_butSlider.clip;
+			if (mButSlider) {
+				but = mButSlider.clip;
 				if (but)
 					but.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
+			}
+			
+			if (mClipArea) {
+				var stage:Stage = mClipArea.stage;
+				if (stage) {
+					stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+				}
 			}
 		}
 		
 		/** Удалить с кнопок подписки на колесо */
 		private function wheelUnsubscribe():void {
 			var but:MovieClip;
-			if (m_butPrev) {
-				but = m_butPrev.clip;
+			if (mButPrev) {
+				but = mButPrev.clip;
 				if (but)
 					but.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			}
-			if (m_butNext) {
-				but = m_butNext.clip;
+			if (mButNext) {
+				but = mButNext.clip;
 				if (but)
 					but.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			}
-			if (m_butSlider) {
-				but = m_butSlider.clip;
+			if (mButSlider) {
+				but = mButSlider.clip;
 				if (but)
 					but.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			}
+			if (mClipArea) {
+				var stage:Stage = mClipArea.stage;
+				if (stage) {
+					stage.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+				}
+			}
+		}
+		
+		public function unsibscribeStageListeners():void
+		{
+			wheelUnsubscribe();
 		}
 		
 		/** Обработчик входа в кадр для расчета текущей позиции */
 		private function onPositionFrame(event:Event):void {
 			var time:int = getTimer();
-			if (time > m_timeTarget) {
+			if (time > mTimeTarget) {
 				// дошли до финального времени, отписаться от кадров
 				var target:DisplayObject = event.target as DisplayObject;
 				target.removeEventListener(Event.ENTER_FRAME, onPositionFrame);
-				m_positionSpeed = 0.0;
-				m_positionAccel = 0.0;
-				positionSet(m_positionTarget);
+				mPositionSpeed = 0.0;
+				mPositionAccel = 0.0;
+				positionSet(mPositionTarget);
 				return;
 			}
 			// время еще есть, пересчитать промежуточное положение и скорость
-			var timeDelta:Number = time - m_timeLast;
-			m_timeLast = time;
-			var pos:Number = m_position + m_positionSpeed * timeDelta + m_positionAccel * timeDelta * timeDelta / 2.0;
-			m_positionSpeed += m_positionAccel * timeDelta;
+			var timeDelta:Number = time - mTimeLast;
+			mTimeLast = time;
+			var pos:Number = mPosition + mPositionSpeed * timeDelta + mPositionAccel * timeDelta * timeDelta / 2.0;
+			mPositionSpeed += mPositionAccel * timeDelta;
 			positionSet(pos);
 		}
 		
 		/** Подписаться на кадры для отработки плавной прокрутки */
 		private function frameSubscribe():void {
-			if (m_clipWheel) {
-				m_clipWheel.addEventListener(Event.ENTER_FRAME, onPositionFrame, false, 0, true);
+			if (mClipWheel) {
+				mClipWheel.addEventListener(Event.ENTER_FRAME, onPositionFrame, false, 0, true);
 				return;
 			}
 			//CONFIG::debug { trace("CGScrollSeparate::frameSubscribe", "no m_clipWheel!"); }
 			var but:MovieClip;
-			if (m_butPrev) {
-				but = m_butPrev.clip;
+			if (mButPrev) {
+				but = mButPrev.clip;
 				if (but) {
 					but.addEventListener(Event.ENTER_FRAME, onPositionFrame, false, 0, true);
 					return;
 				}
 			}
-			if (m_butNext) {
-				but = m_butNext.clip;
+			if (mButNext) {
+				but = mButNext.clip;
 				if (but) {
 					but.addEventListener(Event.ENTER_FRAME, onPositionFrame, false, 0, true);
 					return;
 				}
 			}
-			if (m_butSlider) {
-				but = m_butSlider.clip;
+			if (mButSlider) {
+				but = mButSlider.clip;
 				if (but) {
 					but.addEventListener(Event.ENTER_FRAME, onPositionFrame, false, 0, true);
 					return;
@@ -541,22 +606,22 @@ package ui.common {
 		
 		/** Отписаться от кадров отработки плавной прокрутки */
 		private function frameUnsubscribe():void {
-			if (m_clipWheel)
-				m_clipWheel.removeEventListener(Event.ENTER_FRAME, onPositionFrame);
+			if (mClipWheel)
+				mClipWheel.removeEventListener(Event.ENTER_FRAME, onPositionFrame);
 			//CONFIG::debug { if (!m_clipWheel) trace("CGScrollSeparate::frameUnsubscribe", "no m_clipWheel!"); }
 			var but:MovieClip;
-			if (m_butPrev) {
-				but = m_butPrev.clip;
+			if (mButPrev) {
+				but = mButPrev.clip;
 				if (but)
 					but.removeEventListener(Event.ENTER_FRAME, onPositionFrame);
 			}
-			if (m_butNext) {
-				but = m_butNext.clip;
+			if (mButNext) {
+				but = mButNext.clip;
 				if (but)
 					but.removeEventListener(Event.ENTER_FRAME, onPositionFrame);
 			}
-			if (m_butSlider) {
-				but = m_butSlider.clip;
+			if (mButSlider) {
+				but = mButSlider.clip;
 				if (but)
 					but.removeEventListener(Event.ENTER_FRAME, onPositionFrame);
 			}
@@ -564,28 +629,32 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_discrete:Boolean; // флаг скроллера с дискретными значениями
-		private var m_enable:Boolean;
-		private var m_size:Number;
-		private var m_position:Number;
-		private var m_positionTarget:Number; // целевая позиция при прокрутке колесом
-		private var m_step:Number;
-		private var m_length:Number; // полная длина списка
-		private var m_offsetRatio:Number; // отступ первого клика от текущей позиции 
+		private var mDiscrete:Boolean; // флаг скроллера с дискретными значениями
+		private var mEnable:Boolean;
+		private var mSize:Number;
+		private var mPosition:Number;
+		private var mPositionTarget:Number; // целевая позиция при прокрутке колесом
+		private var mStep:Number;
+		private var mLength:Number; // полная длина списка
+		private var mOffsetRatio:Number; // отступ первого клика от текущей позиции
 		
-		private var m_timeLast:int; // последнее время измерения
-		private var m_timeTarget:int; // финальное время за которое стремится завершиться движение
-		private var m_positionSpeed:Number; // текущая скорость изменения позиции; пересчитывается на каждой итерации
-		private var m_positionAccel:Number; // текущее ускорение; пересчитывается только при смене позиции
+		private var mTimeLast:int; // последнее время измерения
+		private var mTimeTarget:int; // финальное время за которое стремится завершиться движение
+		private var mPositionSpeed:Number; // текущая скорость изменения позиции; пересчитывается на каждой итерации
+		private var mPositionAccel:Number; // текущее ускорение; пересчитывается только при смене позиции
 		
-		private var m_butPrev:CGButton;
-		private var m_butNext:CGButton;
-		private var m_butSlider:CGButton;
-		private var m_clipArea:InteractiveObject;
-		private var m_clipWheel:InteractiveObject;
+		private var mButPrev:CGButton;
+		private var mButNext:CGButton;
+		private var mButFirst:CGButton;
+		private var mButLast:CGButton;
+		private var mButSlider:CGButton;
+		private var mClipArea:InteractiveObject;
+		private var mClipWheel:InteractiveObject;
 		
 		private static const PREV_SUFFIX:String = "_prev";
 		private static const NEXT_SUFFIX:String = "_next";
+		private static const FIRST_SUFFIX:String = "_first";
+		private static const LAST_SUFFIX:String = "_last";
 		private static const SLIDER_SUFFIX:String = "_slider";
 		private static const AREA_SUFFIX:String = "_area";
 		private static const WHEEL_SUFFIX:String = "_wheel";

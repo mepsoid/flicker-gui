@@ -1,23 +1,22 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.MovieClip;
-	import services.printClass;
 	
 	/**
 	 * Список скроллируемых элементов
-	 * 
-	 * @version  1.0.7
+	 *
+	 * @version  1.0.8
 	 * @author   meps
 	 */
 	public class CGScrollableList extends CGResizable {
 		
 		public function CGScrollableList(renderer:Class = null, src:* = null, name:String = null) {
-			m_renderer = renderer ? renderer : CGScrollableItem;
-			m_position = 0.0;
-			m_slider = 1.0;
-			m_grid = 1;
-			m_listData = new Vector.<Object>();
-			m_listRenderer = new Vector.<CGScrollableItem>();
+			mRenderer = renderer ? renderer : CGScrollableItem;
+			mPosition = 0.0;
+			mSlider = 1.0;
+			mGrid = 1;
+			mListData = new Vector.<Object>();
+			mListRenderer = new Vector.<CGScrollableItem>();
 			super(src, name);
 			doRedraw();
 		}
@@ -25,16 +24,16 @@ package ui.common {
 		/** Обновить данные в списке */
 		public function update(data:Vector.<Object> = null):void {
 			if (data && data.length)
-				m_listData = data.concat();
+				mListData = data.concat();
 			else
-				m_listData.length = 0;
-			onDataUpdate(m_listData);
+				mListData.length = 0;
+			onDataUpdate(mListData);
 			doRedraw();
 		}
 		
 		/** Текущая позиция списка */
 		public function get position():Number {
-			return m_position;
+			return mPosition;
 		}
 		
 		public function set position(val:Number):void {
@@ -42,39 +41,39 @@ package ui.common {
 				val = 0.0;
 			else if (val > 1.0)
 				val = 1.0;
-			if (val == m_position)
+			if (val == mPosition)
 				return;
-			m_position = val;
+			mPosition = val;
 			doRedraw();
 		}
 		
 		/** Текущее соотношение отображаемой области списка */
 		public function get slider():Number {
-			return m_slider;
+			return mSlider;
 		}
 		
 		/** Дискретность позиционирования в элементах при прокрутке */
 		public function get grid():int {
-			return m_grid;
+			return mGrid;
 		}
 		
 		public function set grid(val:int):void {
 			if (val < 1)
 				val = 1;
-			if (val == m_grid)
+			if (val == mGrid)
 				return;
-			m_grid = val;
+			mGrid = val;
 			doRedraw();
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
 		override protected function onDestroy():void {
-			m_listData = null;
-			if (m_listRenderer)
-				for each (var item:CGScrollableItem in m_listRenderer)
+			mListData = null;
+			if (mListRenderer)
+				for each (var item:CGScrollableItem in mListRenderer)
 					item.destroy();
-			m_listRenderer = null;
+			mListRenderer = null;
 			super.onDestroy();
 		}
 		
@@ -89,7 +88,7 @@ package ui.common {
 		
 		/** Создание нового рендерера для связывания со слушателями и инициализации */
 		protected function onRendererCreate(name:String):CGScrollableItem {
-			return new m_renderer(this, name);
+			return new mRenderer(this, name);
 		}
 		
 		/** Обновление содержимого рендерера при перерисовке списка */
@@ -104,36 +103,36 @@ package ui.common {
 		
 		/** Получить данные связанные с рендерером */
 		protected function rendererToData(item:*):* {
-			var index:int = m_listRenderer.indexOf(item);
+			var index:int = mListRenderer.indexOf(item);
 			if (index < 0)
 				return null;
-			var len:int = m_listData.length;
-			var lenGrid:int = int((len - 1) / m_grid + 1) * m_grid;
-			index += int(m_position * lenGrid / m_grid) * m_grid;
+			var len:int = mListData.length;
+			var lenGrid:int = int((len - 1) / mGrid + 1) * mGrid;
+			index += int(mPosition * lenGrid / mGrid) * mGrid;
 			if (index >= len)
 				return null;
-			return m_listData[index];
+			return mListData[index];
 		}
 		
 		/** Получить индекс в списке данных по экземпляру */
 		protected function dataToIndex(data:*):int {
-			return m_listData.indexOf(data);
+			return mListData.indexOf(data);
 		}
 		
 		/** Перерисовка всего списка элементов */
 		protected function doRedraw():void {
 			var index:int = 0;
-			var len:int = m_listData.length; // собственная длина данных
-			var lenGrid:int = int((len - 1) / m_grid + 1) * m_grid; // увеличенная по текущей сетке длина
-			var pos:int = int(m_position * lenGrid / m_grid) * m_grid;
-			var offset:int = 1000 * (m_position * lenGrid / m_grid - int(m_position * lenGrid / m_grid)); // плавная прокрутка в grid раз медленнее
+			var len:int = mListData.length; // собственная длина данных
+			var lenGrid:int = int((len - 1) / mGrid + 1) * mGrid; // увеличенная по текущей сетке длина
+			var pos:int = int(mPosition * lenGrid / mGrid) * mGrid;
+			var offset:int = 1000 * (mPosition * lenGrid / mGrid - int(mPosition * lenGrid / mGrid)); // плавная прокрутка в grid раз медленнее
 			size = offset; // установить промежуточное положение списка
 			while (true) {
 				var item:CGScrollableItem = getRenderer(index);
 				if (!item)
 					break;
 				if (pos < len) {
-					var data:* = m_listData[pos];
+					var data:* = mListData[pos];
 					onRendererUpdate(item, data);
 				} else {
 					onRendererClear(item);
@@ -142,11 +141,11 @@ package ui.common {
 				++pos;
 			}
 			if (len == 0 || index == 0) {
-				m_slider = 1.0;
+				mSlider = 1.0;
 			} else {
-				m_slider = (offset ? index - m_grid : index) / lenGrid;
-				if (m_slider > 1.0)
-					m_slider = 1.0;
+				mSlider = (offset ? index - mGrid : index) / lenGrid;
+				if (mSlider > 1.0)
+					mSlider = 1.0;
 			}
 		}
 		
@@ -155,13 +154,13 @@ package ui.common {
 		/** Рендерер по индексу */
 		private function getRenderer(index:int):CGScrollableItem {
 			var name:String, mc:MovieClip;
-			var len:int = m_listRenderer.length;
+			var len:int = mListRenderer.length;
 			if (index < len) {
 				name = ITEM_PREFIX + index.toString();
 				mc = objectFind(name) as MovieClip;
 				if (!mc)
 					return null;
-				return m_listRenderer[index];
+				return mListRenderer[index];
 			}
 			do {
 				name = ITEM_PREFIX + len.toString();
@@ -169,7 +168,7 @@ package ui.common {
 				if (!mc)
 					return null;
 				var item:CGScrollableItem = onRendererCreate(name);
-				m_listRenderer[len] = item;
+				mListRenderer[len] = item;
 				++len;
 			} while (len < index);
 			return item;
@@ -178,22 +177,22 @@ package ui.common {
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Класс рендерера элемента списка */
-		private var m_renderer:Class;
+		private var mRenderer:Class;
 		
 		/** Позиция списка */
-		private var m_position:Number;
+		private var mPosition:Number;
 		
 		/** Соотношение отображаемой области */
-		private var m_slider:Number;
+		private var mSlider:Number;
 		
 		/** Шаг в количестве отображаемых элементов для прокрутки списков с несколькими колонками */
-		private var m_grid:int;
+		private var mGrid:int;
 		
 		/** Список отображаемых данных */
-		private var m_listData:Vector.<Object>;
+		private var mListData:Vector.<Object>;
 		
 		/** Список уже созданных рендереров */
-		private var m_listRenderer:Vector.<CGScrollableItem>;
+		private var mListRenderer:Vector.<CGScrollableItem>;
 		
 		private static const ITEM_PREFIX:String = ".item_";
 		

@@ -1,11 +1,11 @@
-package ui.common {
+package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Событие переключения состояния
 	 * 
-	 * @version  1.0.1
+	 * @version  1.0.2
 	 * @author   meps
 	 */
 	public class CGEventSwitch extends CGEvent {
@@ -20,13 +20,13 @@ package ui.common {
 		public static const CHANGE:String = "switch_change";
 		
 		public function CGEventSwitch(type:String, active:Boolean) {
-			m_active = active;
+			mActive = active;
 			super(type);
 		}
 		
 		/** Текущая активность состояния */
 		public function get active():Boolean {
-			return m_active;
+			return mActive;
 		}
 		
 		override public function toString():String {
@@ -35,7 +35,7 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_active:Boolean;
+		private var mActive:Boolean;
 		
 	}
 }

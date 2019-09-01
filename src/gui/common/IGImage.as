@@ -1,4 +1,4 @@
-package ui.common {
+package framework.gui {
 	
 	/**
 	 * Интерфейс асинхронно обновляемых подгружаемых изображений

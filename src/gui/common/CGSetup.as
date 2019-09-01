@@ -1,25 +1,25 @@
-package ui.common {
+package framework.gui {
 	
 	/**
 	 * Общие настройки компонентов интерфейса
 	 * 
-	 * @version  1.0.1
+	 * @version  1.0.2
 	 * @author   meps
 	 */
 	public class CGSetup {
 		
 		/** Поддерживаемая логическая частота кадров при анимациях перехода */
 		public static function get fps():Number {
-			return m_fps * 1000;
+			return mFps * 1000;
 		}
 		
 		public static function set fps(val:Number):void {
 			if (val > 0)
-				m_fps = val / 1000;
+				mFps = val / 1000;
 		}
 		
 		public static function get fpsMultiplier():Number {
-			return m_fps;
+			return mFps;
 		}
 		
 		public function CGSetup() {
@@ -28,7 +28,7 @@ package ui.common {
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Глобальная частота кадров */
-		private static var m_fps:Number = 60.0 / 1000;
+		private static var mFps:Number = 30.0 / 1000;
 		
 	}
 

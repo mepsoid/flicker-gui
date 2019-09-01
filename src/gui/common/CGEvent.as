@@ -1,11 +1,11 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Базовое событие элементов интерфейса
 	 *
-	 * @version  1.0.3
+	 * @version  1.0.4
 	 * @author   meps
 	 */
 	public class CGEvent {
@@ -17,17 +17,17 @@
 		public static const CLICK:String = "click";
 		
 		public function CGEvent(type:String) {
-			m_type = type;
+			mType = type;
 		}
 		
 		/** Тип события */
 		public function get type():String {
-			return m_type;
+			return mType;
 		}
 		
 		/** Владелец события */
 		public function get target():CGDispatcher {
-			return m_target;
+			return mTarget;
 		}
 		
 		public function toString():String {
@@ -37,13 +37,13 @@
 		////////////////////////////////////////////////////////////////////////
 		
 		internal function targetSet(target:CGDispatcher):void {
-			m_target = target;
+			mTarget = target;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_type:String;
-		private var m_target:CGDispatcher;
+		private var mType:String;
+		private var mTarget:CGDispatcher;
 		
 	}
 

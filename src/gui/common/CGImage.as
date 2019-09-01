@@ -1,87 +1,67 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
 	import flash.display.Bitmap;
-	import flash.display.BitmapData;
 	import flash.display.DisplayObject;
 	import flash.display.DisplayObjectContainer;
 	import flash.display.MovieClip;
-	import flash.display.PixelSnapping;
 	import flash.events.Event;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
-	import flash.utils.ByteArray;
-	import flash.utils.getDefinitionByName;
 	
 	/**
 	 * Класс загружаемой картинки
 	 * 
-	 * @version  1.1.29
+	 * @version  1.1.30
 	 * @author   meps
 	 */
 	public class CGImage extends CGInteractive implements IGImage {
 		
 		// если плейсера нет, то объект по нему не скейлится и не выравнивается
 		public function CGImage(src:* = null, name:String = null) {
-			m_load = false;
-			m_image = null;
+			mLoad = false;
+			mImage = null;
 			super(src, name);
 			constDefault(CONST_FIT, FIT_NONE); // определить значение по умолчанию для используемой константы
 		}
 		
 		/** Загрузить изображение из файла */
 		public function load(path:String):void {
-			//log.write("#", "CGImage::load", url, m_url);
-			if (m_path == path) {
+			if (mPath == path) {
 				doRefit();
 				return;
 			}
 			removeImage();
-			m_load = true;
-			m_image = null;
-			m_path = path;
+			mLoad = true;
+			mImage = null;
+			mPath = path;
 			doState();
-			CGImageProxy.instance.load(m_path, this);
+			CGImageProxy.instance.load(mPath, this);
 		}
 		
 		/** Удалить изображение */
 		public function clear():void {
 			CGImageProxy.instance.unload(this);
 			removeImage();
-			m_load = false;
-			m_image = null;
-			m_path = null;
+			mLoad = false;
+			mImage = null;
+			mPath = null;
 			doState();
 		}
 		
-		/** Задать виртуальный прямоугольник, соответствующий изображению */
-		/*
-		public function sizeVirtual(rect:Rectangle):void {
-			if (rect) {
-				if (m_rect && rect.equals(m_rect))
-					return;
-				m_rect = rect;
-				doRefit();
-			} else if (m_rect) {
-				m_rect = null;
-				doRefit();
-			}
-		}
-		*/
-		
 		/** Обработчик загруженной картинки */
 		public function imageUpdate(result:CGImageResult):void {
-			if (result.error || !m_load) {
+			if (result.error || !mLoad) {
 				// ошибка при загрузке изображения
 				removeImage();
-				m_load = false;
-				m_image = null;
+				mLoad = false;
+				mImage = null;
 				doState();
 			} else {
-				m_load = false;
-				if (!m_image || m_image.bitmapData !== result.raster) {
+				mLoad = false;
+				if (!mImage || mImage.bitmapData !== result.raster) {
 					removeImage();
-					m_image = result.create();
+					mImage = result.create();
 				}
 				doState();
 				doRefit();
@@ -101,13 +81,13 @@
 		}
 		
 		override protected function doStateValue():String {
-			if (m_load)
+			if (mLoad)
 				return LOAD_STATE;
-			return m_image ? SHOW_STATE : EMPTY_STATE;
+			return mImage ? SHOW_STATE : EMPTY_STATE;
 		}
 		
 		override protected function onDestroy():void {
-			m_image = null;
+			mImage = null;
 			super.onDestroy();
 		}
 		
@@ -115,11 +95,11 @@
 		
 		/** Удаление изображения со сцены */
 		private function removeImage():void {
-			if (!m_image)
+			if (!mImage)
 				return;
-			var parent:DisplayObjectContainer = m_image.parent;
+			var parent:DisplayObjectContainer = mImage.parent;
 			if (parent)
-				parent.removeChild(m_image);
+				parent.removeChild(mImage);
 		}
 		
 		/** Перепозиционирование изображения */
@@ -130,34 +110,32 @@
 			var mask:DisplayObject = objectFind(PLACER_ID);
 			if (!mask) {
 				// отображать некуда
-				if (m_image)
-					m_image.visible = false;
+				if (mImage)
+					mImage.visible = false;
 				return;
 			}
 			mask.visible = false;
-			if (!m_image)
+			if (!mImage)
 				// отображать нечего
 				return;
-			m_image.mask = mask;
+			mImage.mask = mask;
 			var parent:DisplayObjectContainer = mask.parent;
 			if (!parent.stage) {
 				// принудительное позиционирование по факту размещения родительского элемента на сцене 
 				parent.addEventListener(Event.ADDED_TO_STAGE, doRefit, false, 0, true);
 				return;
 			}
-			parent.addChildAt(m_image, parent.getChildIndex(mask) + 1);
-			m_image.visible = true;
+			parent.addChildAt(mImage, parent.getChildIndex(mask) + 1);
+			mImage.visible = true;
 			var r:Rectangle;
 			var w:Number, h:Number, dw:Number, dh:Number, kw:Number, kh:Number;
 			var a:Number, b:Number, c:Number, d:Number, ow:Number, oh:Number;
 			var p0:Point, pw:Point, ph:Point;
 			var tm:Matrix, pm:Matrix;
 			var f:String = constGet(CONST_FIT);
-			//log.write(p.stage ? "#" : "!", "CGImage::onRefit", f, m, m_url, m_image, m_image.getBounds(null), p.stage);
 			if (FIT_ALL == f) {
 				// пропорционально заполнить плейсер по максимальному размеру
 				r = mask.getBounds(parent); // собственные размеры плейсера
-				//log.write("!", "placer:", r);
 				w = r.width;
 				h = r.height;
 				p0 = new Point(r.left, r.top);
@@ -167,16 +145,13 @@
 				p0 = mask.localToGlobal(p0);
 				pw = mask.localToGlobal(pw);
 				ph = mask.localToGlobal(ph);
-				//log.write("!", "p0:", p0, "pw:", pw, "ph:", ph);
 				// соотношение сторон параллелограмма плейсера и сторон изображения
 				dw = distPoint(p0, pw);
 				dh = distPoint(p0, ph);
-				//log.write("!", "dw:", dw, "dh:", dh);
-				if (m_rect)
-					r = m_rect;
+				if (mRect)
+					r = mRect;
 				else
-					r = m_image.getBounds(null);
-				//log.write("!", "img:", r, m_rect);
+					r = mImage.getBounds(null);
 				kw = r.width / dw;
 				kh = r.height / dh;
 				if (kw > kh) {
@@ -186,7 +161,6 @@
 					kw = r.width * kh / kw;
 					kh = r.height;
 				}
-				//log.write("!", "kw:", kw, "kh:", kh);
 				// коэффициенты матрицы переводящей плейсер в его текущую позицию
 				a = (pw.x - p0.x) / kw;
 				b = (pw.y - p0.y) / kw;
@@ -206,15 +180,13 @@
 					pm.concat(parent.transform.matrix);
 				pm.invert();
 				tm.concat(pm);
-				//log.write("!", "cycle matrix:", tm);
 				// матрица преобразования изображения относительно родительского контейнера
 				/*
 				pm = parent.transform.concatenatedMatrix;
 				pm.invert();
 				tm.concat(pm);
-				log.write("!", "concat matrix:", tm);
 				*/
-				m_image.transform.matrix = tm;
+				mImage.transform.matrix = tm;
 			} else if (FIT_FILL == f) {
 				// пропорционально заполнить плейсер по минимуму, плейсер является маской
 				// алгоритм намеренно переведен к примитивному, чтобы можно было накладывать анимацию поверх вписанного изображения
@@ -222,10 +194,10 @@
 				w = r.width;
 				h = r.height;
 				p0 = new Point(r.left, r.top);
-				if (m_rect)
-					r = m_rect;
+				if (mRect)
+					r = mRect;
 				else
-					r = m_image.getBounds(null);
+					r = mImage.getBounds(null);
 				kw = w / r.width;
 				kh = h / r.height;
 				if (kw > kh)
@@ -282,14 +254,13 @@
 				pm.invert();
 				tm.concat(pm);
 				*/
-				//log.write("!", "cycle matrix:", tm);
 				// матрица преобразования изображения относительно родительского контейнера
 				/*
 				pm = parent.transform.concatenatedMatrix;
 				pm.invert();
 				tm.concat(pm);
 				*/
-				m_image.transform.matrix = tm;
+				mImage.transform.matrix = tm;
 			} else if (FIT_EXACT == f) {
 				// заполнить весь плейсер
 				r = mask.getBounds(parent); // собственные размеры плейсера
@@ -305,10 +276,10 @@
 				// соотношение сторон параллелограмма плейсера и сторон изображения
 				dw = distPoint(p0, pw);
 				dh = distPoint(p0, ph);
-				if (m_rect)
-					r = m_rect;
+				if (mRect)
+					r = mRect;
 				else
-					r = m_image.getBounds(null);
+					r = mImage.getBounds(null);
 				// коэффициенты матрицы переводящей плейсер в его текущую позицию
 				a = (pw.x - p0.x) / r.width;
 				b = (pw.y - p0.y) / r.width;
@@ -325,18 +296,17 @@
 					pm.concat(parent.transform.matrix);
 				pm.invert();
 				tm.concat(pm);
-				//log.write("!", "cycle matrix:", tm);
 				// матрица преобразования изображения относительно родительского контейнера
 				/*
 				pm = parent.transform.concatenatedMatrix;
 				pm.invert();
 				tm.concat(pm);
 				*/
-				m_image.transform.matrix = tm;
+				mImage.transform.matrix = tm;
 			} else if (FIT_LOCK == f) {
 				// ...
 			} else {
-				m_image.transform.matrix = new Matrix();
+				mImage.transform.matrix = new Matrix();
 			}
 		}
 		
@@ -350,16 +320,16 @@
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Флаг процесса загрузки изображения */
-		private var m_load:Boolean;
+		private var mLoad:Boolean;
 		
 		/** Виртуальный прямоугольник размеров изображения */
-		private var m_rect:Rectangle;
+		private var mRect:Rectangle;
 		
 		/** Собственный экземпляр изображения */
-		private var m_image:Bitmap;
+		private var mImage:Bitmap;
 		
 		/** Путь к изображению */
-		private var m_path:String;
+		private var mPath:String;
 		
 		private static const PLACER_ID:String  = ".placer";
 		private static const CONST_FIT:String  = "fit"; // имя константы

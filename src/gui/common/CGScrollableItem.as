@@ -1,4 +1,4 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.MovieClip;
 	
@@ -11,35 +11,35 @@ package ui.common {
 	public class CGScrollableItem extends CGInteractive {
 		
 		public function CGScrollableItem(src:* = null, name:String = null) {
-			m_data = null;
+			mData = null;
 			super(src, name);
 		}
 		
 		public function update(data:* = null):void {
-			if (m_data) {
+			if (mData) {
 				// изменились только данные
-				m_data = data;
+				mData = data;
 				onUpdate();
 				return;
 			}
 			// изменилось и состояние
-			m_data = data;
+			mData = data;
 			doState();
 			onUpdate();
 		}
 		
 		public function clear():void {
-			if (!m_data)
+			if (!mData)
 				return;
 			// изменилось состояние
-			m_data = null;
+			mData = null;
 			doState();
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
 		override protected function doStateValue():String {
-			return m_data ? COMMON_STATE : DISABLE_STATE;
+			return mData ? COMMON_STATE : DISABLE_STATE;
 		}
 		
 		override protected function onStateFinish():void {
@@ -55,7 +55,7 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		protected var m_data:*;
+		protected var mData:*;
 		
 		private static const COMMON_STATE:String = "common";
 		private static const DISABLE_STATE:String = "disable";

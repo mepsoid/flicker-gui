@@ -1,4 +1,4 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.DisplayObject;
 	import flash.geom.Rectangle;

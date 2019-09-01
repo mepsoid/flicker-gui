@@ -1,4 +1,4 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
@@ -8,49 +8,49 @@ package ui.common {
 	import flash.geom.Matrix;
 	import flash.geom.Rectangle;
 	import flash.utils.getTimer;
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Данные о загруженном изображении
 	 * 
-	 * @version  1.0.6
+	 * @version  1.0.7
 	 * @author   meps
 	 */
 	public class CGImageResult {
 		
 		public function CGImageResult(path:String, data:DisplayObject = null) {
-			m_timestamp = getTimer();
-			m_path = path;
+			mTimestamp = getTimer();
+			mPath = path;
 			if (data is BitmapData) {
 				// исходная графика растр
-				m_raster = Bitmap(data).bitmapData;
-				m_error = false;
+				mRaster = Bitmap(data).bitmapData;
+				mError = false;
 			} else if (data) {
 				// исходная графика рендерится в битмап
-				m_raster = new BitmapData(data.width, data.height, true, 0x00000000);
-				m_raster.draw(data, null, null, null, null, true);
-				m_error = false;
+				mRaster = new BitmapData(data.width, data.height, true, 0x00000000);
+				mRaster.draw(data, null, null, null, null, true);
+				mError = false;
 			} else {
 				// ошибка при загрузке
-				m_raster = null;
-				m_error = true;
+				mRaster = null;
+				mError = true;
 			}
 		}
 		
 		/** Путь к изображению */
 		public function get path():String {
-			return m_path;
+			return mPath;
 		}
 		
 		/** Растровые данные изображения */
 		public function get raster():BitmapData {
-			return m_raster;
+			return mRaster;
 		}
 		
 		/** Создать графику на основе растра */
 		public function create():Bitmap {
-			if (m_raster) {
-				var bitmap:Bitmap = new Bitmap(m_raster);
+			if (mRaster) {
+				var bitmap:Bitmap = new Bitmap(mRaster);
 				bitmap.smoothing = true;
 				return bitmap;
 			}
@@ -60,29 +60,29 @@ package ui.common {
 		
 		/** Флаг успешной загрузки изображения */
 		public function get error():Boolean {
-			return m_error;
+			return mError;
 		}
 		
 		public function get width():int {
-			if (!m_error)
-				return m_raster.width;
+			if (!mError)
+				return mRaster.width;
 			return 0;
 		}
 		
 		public function get height():int {
-			if (!m_error)
-				return m_raster.height;
+			if (!mError)
+				return mRaster.height;
 			return 0;
 		}
 		
 		/** Обновить таймер ожидания */
 		public function touch():void {
-			m_timestamp = getTimer();
+			mTimestamp = getTimer();
 		}
 		
 		/** Флаг ошибочного или давно не использованного изображения */
 		public function isUseless():Boolean {
-			return m_error || ((getTimer() - m_timestamp) > TIMEOUT);
+			return mError || ((getTimer() - mTimestamp) > TIMEOUT);
 		}
 		
 		public function toString():String {
@@ -91,10 +91,10 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_timestamp:int; // время последнего обращения к изображению
-		private var m_path:String;
-		private var m_raster:BitmapData;
-		private var m_error:Boolean;
+		private var mTimestamp:int; // время последнего обращения к изображению
+		private var mPath:String;
+		private var mRaster:BitmapData;
+		private var mError:Boolean;
 		
 		private static const RECT:Rectangle = new Rectangle();
 		private static const TIMEOUT:int = 60000; // время жизни успешно загруженных изображений

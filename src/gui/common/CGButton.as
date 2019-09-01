@@ -1,48 +1,48 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
 	import flash.display.MovieClip;
 	import flash.events.MouseEvent;
 	import flash.events.TimerEvent;
 	import flash.utils.Timer;
-	import services.printClass;
+	import framework.utils.printClass;
 
 	/**
 	 * Кнопка для графического интерфейса
 	 * 
-	 * @version  1.2.18
+	 * @version  1.2.20
 	 * @author   meps
 	 */
 	public class CGButton extends CGInteractive {
 		
 		public function CGButton(src:* = null, name:String = null, lab:String = null) {
-			m_enable = true;
-			m_press = false;
-			m_timeWait = WAIT_DEFAULT;
-			m_timeRate = RATE_DEFAULT;
+			mEnable = true;
+			mPress = false;
+			mTimeWait = WAIT_DEFAULT;
+			mTimeRate = RATE_DEFAULT;
 			super(src, name);
 			if (lab)
 				label = lab;
 		}
 		
 		/** Доступность кнопки для взаимодействия с ней */
-		public function get enable():Boolean { return m_enable; }
+		public function get enable():Boolean { return mEnable; }
 		
 		public function set enable(val:Boolean):void {
-			if (m_enable == val)
+			if (mEnable == val)
 				return;
-			m_enable = val;
+			mEnable = val;
 			doState();
 			// обновить статус области ввода
 			var hitMc:MovieClip = objectFind(HIT_ID) as MovieClip;
 			if (!hitMc)
 				hitMc = clip;
 			if (hitMc)
-				hitMc.buttonMode = m_enable;
-			if (!m_enable) {
+				hitMc.buttonMode = mEnable;
+			if (!mEnable) {
 				// неактивная кнопка не генерирует автонажатий
-				m_repeat = false;
-				if (m_timer)
-					m_timer.stop();
+				mRepeat = false;
+				if (mTimer)
+					mTimer.stop();
 			}
 		}
 		
@@ -57,25 +57,25 @@
 		public function set icon(val:String):void { iconSet(val, ICON_ID); }
 		
 		/** Время ожидания до автонажатий (мс) */
-		public function get delayWait():int { return m_timeWait; }
+		public function get delayWait():int { return mTimeWait; }
 		
 		public function set delayWait(val:int):void {
 			if (val < 0)
 				return;
-			m_timeWait = val;
+			mTimeWait = val;
 			if (val > 0)
 				createTimer();
 		}
 		
 		/** Интервал между автонажатиями (мс) */
 		public function get delayRate():int {
-			return m_timeRate;
+			return mTimeRate;
 		}
 		
 		public function set delayRate(val:int):void {
 			if (val <= 0)
 				return;
-			m_timeRate = val;
+			mTimeRate = val;
 			createTimer();
 		}
 		
@@ -91,15 +91,20 @@
 			if (!hitMc)
 				hitMc = mc;
 			checkToHit(hitMc);
-			hitMc.buttonMode = m_enable;
+			hitMc.buttonMode = mEnable;
 			mc.tabEnabled = false;
 			//hitMc.mouseChildren = false;
 		}
 		
 		override protected function onClipRemove(mc:MovieClip):void {
-			var hitMc:MovieClip = objectFind(HIT_ID) as MovieClip;
-			if (!hitMc)
-				hitMc = mc;
+			//var hitMc:MovieClip = objectFind(HIT_ID) as MovieClip;
+			//if (!hitMc)
+				//hitMc = mc;
+			mOver = false;
+			mDown = false;
+			mPress = false;
+			if (mTimer)
+				mTimer.stop();
 			//hitMc.buttonMode = false;
 			//hitMc.mouseChildren = true;
 			super.onClipRemove(mc);
@@ -108,39 +113,41 @@
 		override protected function onClipMouse(event:MouseEvent):void {
 			super.onClipMouse(event);
 			if (event.type == MouseEvent.ROLL_OUT) {
-				m_press = false;
-				if (m_timer)
-					m_timer.stop();
+				mPress = false;
+				if (mTimer)
+					mTimer.stop();
 			} else if (event.type == MouseEvent.MOUSE_DOWN) {
-				m_press = m_over && m_enable;
-				m_repeat = false;
-				if (m_press && m_timeWait) {
-					m_timer.delay = m_timeWait;
-					m_timer.start();
+				mPress = mOver && mEnable;
+				mRepeat = false;
+				if (mPress && mTimeWait) {
+					mTimer.delay = mTimeWait;
+					mTimer.start();
 				}
+				event.stopImmediatePropagation();
 			} else if (event.type == MouseEvent.MOUSE_UP) {
-				if (m_press && m_enable) {
-					if (m_timer)
-						m_timer.stop();
-					if (!m_repeat || m_timeWait == 0)
+				if (mPress && mEnable) {
+					if (mTimer)
+						mTimer.stop();
+					if (!mRepeat || mTimeWait == 0)
 						// если еще не было автонажатий или они не используются, при отпускании провести нажатие
 						doButtonClick();
+					event.stopImmediatePropagation();
 				}
-				m_press = false;
+				mPress = false;
 			}
 		}
 		
 		override protected function doStateValue():String {
-			if (m_enable)
-				return (m_over ? OVER_STATE : OUT_STATE) + "_" + (m_down ? DOWN_STATE : UP_STATE);
+			if (mEnable)
+				return (mOver ? OVER_STATE : OUT_STATE) + "_" + (mDown ? DOWN_STATE : UP_STATE);
 			return DISABLE_STATE;
 		}
 		
 		override protected function onDestroy():void {
-			if (m_timer) {
-				m_timer.stop();
-				m_timer.removeEventListener(TimerEvent.TIMER, onTimer);
-				m_timer = null;
+			if (mTimer) {
+				mTimer.stop();
+				mTimer.removeEventListener(TimerEvent.TIMER, onTimer);
+				mTimer = null;
 			}
 			super.onDestroy();
 		}
@@ -154,24 +161,24 @@
 		
 		/** Ленивое создание таймера автоповторов */
 		private function createTimer():void {
-			if (m_timer)
+			if (mTimer)
 				return;
-			m_timer = new Timer(1);
-			m_timer.addEventListener(TimerEvent.TIMER, onTimer, false, 0, true);
+			mTimer = new Timer(1);
+			mTimer.addEventListener(TimerEvent.TIMER, onTimer);
 		}
 		
 		/** Обработчик таймера автоповторов */
 		private function onTimer(e:TimerEvent):void {
-			if (m_repeat) {
+			if (mRepeat) {
 				// автоповтор нажатий
 				doButtonClick();
 			} else {
 				// срабатывание после ожидания
-				m_repeat = true;
-				if (m_timeRate)
-					m_timer.delay = m_timeRate;
-				m_timer.stop();
-				m_timer.start();
+				mRepeat = true;
+				if (mTimeRate)
+					mTimer.delay = mTimeRate;
+				mTimer.stop();
+				mTimer.start();
 				doButtonClick();
 			}
 		}
@@ -179,22 +186,22 @@
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Активность кнопки */
-		protected var m_enable:Boolean;
+		protected var mEnable:Boolean;
 		
 		/** Флаг нажатия мыши над кнопкой */
-		protected var m_press:Boolean;
+		protected var mPress:Boolean;
 		
 		/** Флаг включения автоповтора нажатий */
-		protected var m_repeat:Boolean;
+		protected var mRepeat:Boolean;
 		
 		/** Таймер ожидания и повтора нажатий */
-		protected var m_timer:Timer;
+		protected var mTimer:Timer;
 		
 		/** Время ожидания до автонажатия */
-		protected var m_timeWait:int;
+		protected var mTimeWait:int;
 		
 		/** Интервал между автонажатиями */
-		protected var m_timeRate:int;
+		protected var mTimeRate:int;
 		
 		private static const DISABLE_STATE:String = "disable";
 		private static const OVER_STATE:String    = "over";

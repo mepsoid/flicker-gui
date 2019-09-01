@@ -1,26 +1,26 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.utils.Dictionary;
 	
 	/**
 	 * Дескриптор скина, соответствие идентификаторов классам и список используемых файлов
 	 * 
-	 * @version  1.1.2
+	 * @version  1.1.3
 	 * @author   meps
 	 */
 	public class CGSkinDescriptor {
 		
 		/** @private */
 		public function CGSkinDescriptor(skinId:String) {
-			m_id = skinId;
-			m_embeds = new Vector.<Class>();
-			m_files = new Vector.<String>();
-			m_resources = new Dictionary();
+			mId = skinId;
+			mEmbeds = new Vector.<Class>();
+			mFiles = new Vector.<String>();
+			mResources = new Dictionary();
 		}
 		
 		/** Идентификатор скина */
 		public function get id():String {
-			return m_id;
+			return mId;
 		}
 		
 		/** Добавить в скин вкомпилированный класс с ресурсами; второй параметр
@@ -29,27 +29,27 @@ package ui.common {
 			// TODO связать с классом идентификаторы находящихся в нем ресурсов
 			if (embedHave(embed))
 				return;
-			m_embeds.push(embed);
+			mEmbeds.push(embed);
 		}
 		
 		/** Проверить наличие класса с ресурсами */
 		public function embedHave(embed:Class):Boolean {
-			return m_embeds.indexOf(embed) >= 0;
+			return mEmbeds.indexOf(embed) >= 0;
 		}
 		
 		/** Начать итерацию по классам с ресурсами */
 		public function embedFirst():Class {
-			m_embedIterator = 1;
-			if (m_embeds.length == 0)
+			mEmbedIterator = 1;
+			if (mEmbeds.length == 0)
 				return null;
-			return m_embeds[0];
+			return mEmbeds[0];
 		}
 		
 		/** Следующий элемент в списке классов с ресурсами */
 		public function embedNext():Class {
-			if (m_embedIterator >= m_embeds.length)
+			if (mEmbedIterator >= mEmbeds.length)
 				return null;
-			return m_embeds[m_embedIterator++];
+			return mEmbeds[mEmbedIterator++];
 		}
 		
 		/** Добавить в скин путь к файлу с ресурсами; второй параметр описывает
@@ -58,27 +58,27 @@ package ui.common {
 			// TODO связать с файлом идентификаторы находящихся в нем ресурсов
 			if (fileHave(path))
 				return;
-			m_files.push(path);
+			mFiles.push(path);
 		}
 		
 		/** Проверить наличие файла по пути */
 		public function fileHave(path:String):Boolean {
-			return m_files.indexOf(path) >= 0;
+			return mFiles.indexOf(path) >= 0;
 		}
 		
 		/** Начать итерацию по именам файлов */
 		public function fileFirst():String {
-			m_fileIterator = 1;
-			if (m_files.length == 0)
+			mFileIterator = 1;
+			if (mFiles.length == 0)
 				return null;
-			return m_files[0];
+			return mFiles[0];
 		}
 		
 		/** Следующий элемент в списке имен файлов */
 		public function fileNext():String {
-			if (m_fileIterator >= m_files.length)
+			if (mFileIterator >= mFiles.length)
 				return null;
-			return m_files[m_fileIterator++];
+			return mFiles[mFileIterator++];
 		}
 		
 		/** Связать идентификатор с именем класса ресурса; для совпадающих
@@ -86,29 +86,29 @@ package ui.common {
 		 * по такому правилу действует по умолчанию */
 		public function resourceBind(resourceId:String, className:String = null):void {
 			if (className)
-				m_resources[resourceId] = className;
+				mResources[resourceId] = className;
 			else
-				m_resources[resourceId] = resourceId;
+				mResources[resourceId] = resourceId;
 		}
 		
 		/** Получить имя класса ресурса по идентификатору */
 		public function resourceGet(resourceId:String):String {
-			if (!m_resources.hasOwnProperty(resourceId)) {
+			if (!mResources.hasOwnProperty(resourceId)) {
 				//CONFIG::debug { trace("!", "Unbinded resource at CGSkin.resourceGet(" + resourceId + ")"); }
 				// по умолчанию возвращать идентификатор вместо связанного с ним биндинга
 				return resourceId;
 			}
-			return m_resources[resourceId];
+			return mResources[resourceId];
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_id:String;
-		private var m_embeds:Vector.<Class>;
-		private var m_embedIterator:int = 0;
-		private var m_files:Vector.<String>;
-		private var m_fileIterator:int = 0;
-		private var m_resources:Dictionary;
+		private var mId:String;
+		private var mEmbeds:Vector.<Class>;
+		private var mEmbedIterator:int = 0;
+		private var mFiles:Vector.<String>;
+		private var mFileIterator:int = 0;
+		private var mResources:Dictionary;
 		
 	}
 

@@ -1,11 +1,11 @@
-package ui.common {
+package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
 	 * Событие смены идентифицируемых элементов интерфейса
 	 *
-	 * @version  1.0.2
+	 * @version  1.0.3
 	 * @author   meps
 	 */
 	public class CGEventChange extends CGEvent {
@@ -20,13 +20,13 @@ package ui.common {
 		public static const IMAGE:String = "change_image";
 		
 		public function CGEventChange(type:String, id:String) {
-			m_id = id;
+			mId = id;
 			super(type);
 		}
 		
 		/** Установленное состояние элемента */
 		public function get id():String {
-			return m_id;
+			return mId;
 		}
 		
 		override public function toString():String {
@@ -35,7 +35,7 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_id:String;
+		private var mId:String;
 		
 	}
 }

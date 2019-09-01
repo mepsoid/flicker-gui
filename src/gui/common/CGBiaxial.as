@@ -1,7 +1,6 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.MovieClip;
-	import ui.common.CGContainer;
 	
 	/**
 	 * Прототип контейнера для управления двухуровневым позиционированием на таймлайне

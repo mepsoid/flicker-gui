@@ -1,4 +1,4 @@
-package ui.common {
+package framework.gui {
 	
 	import flash.display.DisplayObjectContainer;
 	import flash.display.MovieClip;
@@ -8,7 +8,7 @@ package ui.common {
 	/**
 	 * Менеджер тултипов
 	 * 
-	 * @version  1.0.3
+	 * @version  1.0.4
 	 * @author   meps
 	 */
 	public class CGTipManager {
@@ -28,11 +28,11 @@ package ui.common {
 		
 		/** Контейнер тултипов */
 		public function get container():DisplayObjectContainer {
-			return m_container;
+			return mContainer;
 		}
 		
 		public function set container(val:DisplayObjectContainer):void {
-			m_container = val;
+			mContainer = val;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
@@ -42,20 +42,20 @@ package ui.common {
 			var coords:Point, mcOld:MovieClip;
 			var mcNew:MovieClip = tip.clip;
 			// проверить на совпадение с уже отображаемым клипом
-			if (m_tip) {
-				mcOld = m_cache[m_tip];
+			if (mTip) {
+				mcOld = mPool[mTip];
 				if (mcOld === mcNew)
 					// клипы полностью совпали, игнорировать обновление
 					return;
 				// удалить старый клип, если он был
-				if (m_container)
-					m_container.removeChild(mcOld);
+				if (mContainer)
+					mContainer.removeChild(mcOld);
 			}
 			// обновить кеш клипов тултипов
-			m_tip = tip;
+			mTip = tip;
 			if (mcNew) {
 				// новый клип добавить в кеш и выровнять по рабочей области
-				m_cache[m_tip] = mcNew;
+				mPool[mTip] = mcNew;
 				var parent:DisplayObjectContainer = mcNew.parent;
 				if (parent) {
 					// тултип вписан в элемент
@@ -65,39 +65,39 @@ package ui.common {
 					// тултип создан из ресурса
 					coords = new Point();
 				}
-				coords = m_container.globalToLocal(coords);
+				coords = mContainer.globalToLocal(coords);
 				mcNew.x = coords.x;
 				mcNew.y = coords.y;
 			} else {
-				mcNew = m_cache[m_tip];
+				mcNew = mPool[mTip];
 			}
 			if (!mcNew)
 				// нет клипа у тултипа
 				return;
 			mcNew.mouseEnabled = false;
 			mcNew.mouseChildren = false;
-			m_container.addChild(mcNew);
+			mContainer.addChild(mcNew);
 			mcNew.visible = true;
 		}
 		
 		/** Удаление тултипа из области отображения */
 		internal function tipRemove(tip:CGTip):void {
-			if (m_tip !== tip)
+			if (mTip !== tip)
 				// попытка удалить чужой клип
 				return;
-			var mc:MovieClip = m_tip.clip;
+			var mc:MovieClip = mTip.clip;
 			if (!mc)
-				mc = m_cache[m_tip];
-			if (m_container && mc)
-				m_container.removeChild(mc);
-			m_tip = null;
+				mc = mPool[mTip];
+			if (mContainer && mc)
+				mContainer.removeChild(mc);
+			mTip = null;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_container:DisplayObjectContainer;
-		private var m_tip:CGTip; // текущий отображаемый тултип
-		private var m_cache:Dictionary = new Dictionary(); // кеш клипов тултипов
+		private var mContainer:DisplayObjectContainer;
+		private var mTip:CGTip; // текущий отображаемый тултип
+		private var mPool:Dictionary = new Dictionary(); // пул клипов тултипов
 		
 		private static var m_instance:CGTipManager;
 		

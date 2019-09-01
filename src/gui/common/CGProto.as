@@ -1,4 +1,4 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
 	import flash.display.DisplayObject;
 	import flash.display.FrameLabel;
@@ -10,19 +10,23 @@
 	/**
 	 * Прототип элементов графического интерфейса
 	 *
-	 * @version  1.4.36
+	 * @version  1.4.37
 	 * @author   meps
 	 */
 	public class CGProto extends CGContainer {
 		
 		public function CGProto(src:* = null, name:String = null) {
-			//log.write("#", "CGProto::constructor", src, name);
-			m_frame = 0;
-			m_clipFrame = 0;
-			m_framesName = new Vector.<String>();
-			m_framesStart = new Vector.<int>();
-			m_framesFinish = new Vector.<int>();
+			mFrame = 0;
+			mClipFrame = 0;
+			mFramesName = new Vector.<String>();
+			mFramesStart = new Vector.<int>();
+			mFramesFinish = new Vector.<int>();
 			super(src, name);
+		}
+		
+		public function stateHave(name:String):Boolean
+		{
+			return mFramesName.indexOf(name) != -1;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
@@ -36,34 +40,12 @@
 		protected function doState():void {
 			var state:String = doStateValue();
 			doClipState(state, false);
-			/*
-			if (m_parent) {
-				var mc:MovieClip = m_parent.objectFind(m_clipName) as MovieClip;
-				if (mc != null) {
-					if (!clip) {
-						doClipAppend(mc);
-					} else if (clip !== mc) {
-						doClipRemove();
-						doClipAppend(mc);
-					}
-					doClipState(m_state, false);
-				} else {
-					if (clip != null)
-						doClipRemove();
-				}
-			} else if (clip != null) {
-				doClipState(m_state, false);
-			}
-			doClipProcess();
-			*/
-			//trace(this, "update A");
-			//eventSend(new CGEvent(UPDATE));
 		}
 		
 		/** Обработчик смены состояния связанного родительского элемента */
 		override protected function onClipParent():void {
 			// найти по имени клип в родительском элементе
-			var mc:MovieClip = m_parent.objectFind(m_clipName) as MovieClip;
+			var mc:MovieClip = mParent.objectFind(mClipName) as MovieClip;
 			if (mc) {
 				// найден соответствующий клип
 				if (mc === clip) {
@@ -79,21 +61,19 @@
 			} else {
 				// клипа в новом состоянии нет, удалить старый
 				doClipRemove();
-				//trace(this, "update B");
 				eventSend(new CGEvent(UPDATE));
 			}
 		}
 		
 		/** Зарегистрировать клип, подготовить данные по кадрам анимаций */
 		override protected function onClipAppend(mc:MovieClip):void {
-			m_clipFrame = 0;
-			m_framesName.length = 0;
-			m_framesStart.length = 0;
-			m_framesFinish.length = 0;
+			mClipFrame = 0;
+			mFramesName.length = 0;
+			mFramesStart.length = 0;
+			mFramesFinish.length = 0;
 			var state:String = doStateValue();
 			if (mc) {
 				mc.stop();
-				//m_clipState = doStateValue();
 				// собрать кадры анимации по именам
 				var labelList:Array/*FrameLabel*/ = (mc.scenes[0] as Scene).labels as Array/*FrameLabel*/;
 				var frameFinish:int = mc.totalFrames + 1; // последний используемый кадр
@@ -101,10 +81,10 @@
 				for (var index:int = labelList.length - 1; index >= 0; --index) {
 					var label:FrameLabel = labelList[index] as FrameLabel;
 					var s:String = label.name;
-					var j:int = m_framesName.indexOf(s);
+					var j:int = mFramesName.indexOf(s);
 					if (j < 0) {
-						j = m_framesName.length;
-						m_framesName[j] = s;
+						j = mFramesName.length;
+						mFramesName[j] = s;
 					}
 					var frameLabel:int = label.frame;
 					if (frameLabel < frameFirst) {
@@ -113,8 +93,8 @@
 							frameFinish = frameFirst;
 						frameFirst = frameLabel;
 					}
-					m_framesStart[j] = frameFirst;
-					m_framesFinish[j] = frameFinish;
+					mFramesStart[j] = frameFirst;
+					mFramesFinish[j] = frameFinish;
 				}
 			}
 			doClipState(state, true);
@@ -122,7 +102,7 @@
 		
 		/** Удалить регистрацию клипа */
 		override protected function onClipRemove(mc:MovieClip):void {
-			m_clipFrame = 0;
+			mClipFrame = 0;
 			if (clip) {
 				clip.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 				clip.removeEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed);
@@ -134,101 +114,79 @@
 				clip.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 				clip.removeEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed);
 			}
-			m_framesName = null;
-			m_framesStart = null;
-			m_framesFinish = null;
+			mFramesName = null;
+			mFramesStart = null;
+			mFramesFinish = null;
 			super.onDestroy();
 		}
 		
 		/** Сменить состояние со старого на новое */
 		protected function doClipState(stat:String, cont:Boolean = false):void {
 			// TODO cont -- задел на будущее, чтобы можно было плавно продолжать ведущиеся анимации переходов при смене клипов в парентах
-			//trace(this, "clipstate", stat, cont);
 			var frame:int;
 			if (!clip || !stat)
 				return;
 			clip.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 			// проверить на наличие предыдущей анимации
-			//if (m_frame != m_frameResult)
-				//doStateFinish();
-			//var transIndex:int = m_framesName.indexOf(m_clipState + ":" + stat);
-			var transIndex:int = m_framesName.indexOf(m_state + ":" + stat);
-			var stateIndex:int = m_framesName.indexOf(stat); // соответствующий новому состоянию индекс
-			//m_clipState = stat;
-			m_state = stat;
-			m_frameTime = getTimer();
-			if (m_clipFrame == 0) {
+			var transIndex:int = mFramesName.indexOf(mState + ":" + stat);
+			var stateIndex:int = mFramesName.indexOf(stat); // соответствующий новому состоянию индекс
+			mState = stat;
+			mFrameTime = getTimer();
+			if (mClipFrame == 0) {
 				// первоначальное состояние
-				m_frameStart = 0;
-				m_frameFinish = 0;
-				m_frameResult = stateIndex < 0 ? 1 : m_framesStart[stateIndex];
-				m_frame = m_frameResult;
+				mFrameStart = 0;
+				mFrameFinish = 0;
+				mFrameResult = stateIndex < 0 ? 1 : mFramesStart[stateIndex];
+				mFrame = mFrameResult;
 				// несколько костылеобразно: ожидать следующего кадра для начальной инициализации клипа
 				//clip.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 				//return;
 				processFrame();
 			} else if (transIndex >= 0) {
 				// есть переход между состояниями
-				var frameStart:int = m_frameStart;
-				var frameFinish:int = m_frameFinish;
-				m_frameStart = m_framesStart[transIndex];
-				m_frameFinish = m_framesFinish[transIndex];
-				if (frameStart != m_frameStart || frameFinish != m_frameFinish || m_frame == m_frameResult) {
+				var frameStart:int = mFrameStart;
+				var frameFinish:int = mFrameFinish;
+				mFrameStart = mFramesStart[transIndex];
+				mFrameFinish = mFramesFinish[transIndex];
+				if (frameStart != mFrameStart || frameFinish != mFrameFinish || mFrame == mFrameResult) {
 					// новая анимация
-					if (m_frame != m_frameResult) {
+					if (mFrame != mFrameResult) {
 						// начат новый переход в процессе еще не закончившегося
-						m_frame = m_frameStart + (m_frameFinish - m_frameStart) * (frameFinish - m_frame) / (frameFinish - frameStart);
-						//trace(this, "continue", m_frame);
+						mFrame = mFrameStart + (mFrameFinish - mFrameStart) * (frameFinish - mFrame) / (frameFinish - frameStart);
 					} else {
 						// обычный полный переход с начала
-						m_frame = m_frameStart;
-						//trace(this, "new", m_frame);
+						mFrame = mFrameStart;
 					}
 				}
-				m_frameResult = stateIndex < 0 ? 0 : m_framesStart[stateIndex];
-				clip.addEventListener(Event.ENTER_FRAME, onEnterFrame, false, 0, true);
+				mFrameResult = stateIndex < 0 ? 0 : mFramesStart[stateIndex];
+				clip.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 				doStateStart();
 				processFrame();
 			} else if (stateIndex < 0) {
 				// нет нового состояния, возможно это зацикленная анимация
-				//transIndex = m_framesName.indexOf(m_clipState + ":" + m_clipState);
-				transIndex = m_framesName.indexOf(m_state + ":" + m_state);
+				transIndex = mFramesName.indexOf(mState + ":" + mState);
 				if (transIndex > 0) {
-					m_frameStart = m_framesStart[transIndex];
-					m_frameFinish = m_framesFinish[transIndex];
-					m_frameResult = 0;
-					m_frame = m_frameStart;
-					clip.addEventListener(Event.ENTER_FRAME, onEnterFrame, false, 0, true);
+					mFrameStart = mFramesStart[transIndex];
+					mFrameFinish = mFramesFinish[transIndex];
+					mFrameResult = 0;
+					mFrame = mFrameStart;
+					clip.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 				} else {
-					m_frameStart = 0;
-					m_frameFinish = 0;
-					m_frameResult = 1;
-					m_frame = m_frameResult;
+					mFrameStart = 0;
+					mFrameFinish = 0;
+					mFrameResult = 1;
+					mFrame = mFrameResult;
 				}
 				doStateStart();
 				processFrame();
 			} else {
 				// переходов нет, существует только конечное состояние
-				m_frameStart = 0;
-				m_frameFinish = 0;
-				m_frameResult = m_framesStart[stateIndex];
-				m_frame = m_frameResult;
+				mFrameStart = 0;
+				mFrameFinish = 0;
+				mFrameResult = mFramesStart[stateIndex];
+				mFrame = mFrameResult;
 				doStateStart();
 				processFrame();
-				
-				/*
-				if (m_state) {
-					// перемотать клип на нужный кадр
-					clip.visible = true;
-					processFrame(frame);
-				} else {
-					// спрятать клип
-					clip.visible = false;
-					//doClipProcess();
-					eventSend(new CGEvent(UPDATE));
-				}
-				doStateFinish();
-				*/
 			}
 		}
 		
@@ -243,37 +201,37 @@
 		/** Обработать и отобразить текущий кадр в соответствии с установками */
 		private function processFrame():void {
 			var frame:int;
-			if (m_frame != m_frameResult) {
+			if (mFrame != mFrameResult) {
 				// есть анимация, пересчитать ее текущую позицию
 				var time:int = getTimer();
-				frame = m_frame + (time - m_frameTime) * CGSetup.fpsMultiplier;
-				if (m_frameResult > 0) {
+				frame = mFrame + (time - mFrameTime) * CGSetup.fpsMultiplier;
+				if (mFrameResult > 0) {
 					// однократная анимация
-					if (frame >= m_frameFinish)
+					if (frame >= mFrameFinish)
 						// достигли конца анимации
-						frame = m_frameResult;
+						frame = mFrameResult;
 				} else {
 					// зацикленная анимация
-					if (frame >= m_frameFinish)
-						frame = m_frameStart + (frame - m_frameStart) % (m_frameFinish - m_frameStart);
+					if (frame >= mFrameFinish)
+						frame = mFrameStart + (frame - mFrameStart) % (mFrameFinish - mFrameStart);
 				}
-				if (frame != m_frame) {
-					m_frame = frame;
-					m_frameTime = time;
+				if (frame != mFrame) {
+					mFrame = frame;
+					mFrameTime = time;
 				}
 			}
 			if (!clip)
 				return;
-			if (m_clipFrame == 0) {
+			if (mClipFrame == 0) {
 				clip.visible = false;
-				m_clipFrame = m_frame;
-				clip.gotoAndStop(m_frame);
+				mClipFrame = mFrame;
+				clip.gotoAndStop(mFrame);
 				onFrameConstructed();
-			} else if (m_clipFrame != m_frame) {
+			} else if (mClipFrame != mFrame) {
 				clip.visible = false;
-				m_clipFrame = m_frame;
-				clip.addEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed, false, 0, true);
-				clip.gotoAndStop(m_frame);
+				mClipFrame = mFrame;
+				clip.addEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed);
+				clip.gotoAndStop(mFrame);
 			} else {
 				onFrameConstructed();
 			}
@@ -281,13 +239,11 @@
 		
 		/** Обработчик покадровой анимации перехода состояний клипа */
 		private function onEnterFrame(event:Event):void {
-			//trace(this, "enterframe");
 			processFrame();
 		}
-
+		
 		/** Обработчик создания кадра при переходе */
 		private function onFrameConstructed(event:Event = null):void {
-			//trace(this, "framecons", event, m_frameStart + ":" + m_frameFinish, m_frame + "-->" + m_frameResult);
 			if (event != null) {
 				var target:DisplayObject = event.target as DisplayObject;
 				target.removeEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed);
@@ -295,8 +251,7 @@
 			doClipProcess();
 			eventSend(new CGEvent(UPDATE));
 			clip.visible = true;
-			//trace(this, "update C");
-			if (m_frame != m_frameResult)
+			if (mFrame != mFrameResult)
 				return;
 			// достигнут результирующий кадр
 			if (clip != null)
@@ -306,48 +261,45 @@
 		
 		private function doStateStart():void {
 			onStateStart();
-			eventSend(new CGEventState(CGEventState.START, m_state));
+			eventSend(new CGEventState(CGEventState.START, mState));
 		}
 		
 		private function doStateFinish():void {
 			onStateFinish();
-			eventSend(new CGEventState(CGEventState.FINISH, m_state));
+			eventSend(new CGEventState(CGEventState.FINISH, mState));
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Текущее состояние элемента */
-		protected var m_state:String;
-		
-		/** Текущее состояние клипа */
-		//private var m_clipState:String;
+		protected var mState:String;
 		
 		/** Отрисованный кадр клипа */
-		private var m_clipFrame:int;
+		private var mClipFrame:int;
 		
 		/** Текущий кадр клипа */
-		protected var m_frame:int;
+		protected var mFrame:int;
 		
 		/** Время последнего обновления анимации перехода */
-		protected var m_frameTime:int;
+		protected var mFrameTime:int;
 		
 		/** Начальный кадр анимации перехода */
-		protected var m_frameStart:int;
+		protected var mFrameStart:int;
 		
 		/** Предельный кадр анимации перехода */
-		protected var m_frameFinish:int;
+		protected var mFrameFinish:int;
 		
 		/** Результирующий кадр состояния по окончанию анимации перехода */
-		protected var m_frameResult:int;
+		protected var mFrameResult:int;
 		
 		/** Имена кадров */
-		protected var m_framesName:Vector.<String>;
+		protected var mFramesName:Vector.<String>;
 		
 		/** Начальные кадры */
-		protected var m_framesStart:Vector.<int>;
+		protected var mFramesStart:Vector.<int>;
 		
 		/** Конечные кадры при переходах */
-		protected var m_framesFinish:Vector.<int>;
+		protected var mFramesFinish:Vector.<int>;
 		
 	}
 

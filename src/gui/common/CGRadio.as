@@ -1,19 +1,19 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
-	import services.printClass;
+	import framework.utils.printClass;
 	
 	/**
-	 * Объединяемая в группы радиокнопка 
-	 * 
-	 * @version  1.0.9
+	 * Объединяемая в группы радиокнопка
+	 *
+	 * @version  1.0.10
 	 * @author   meps
 	 */
 	public class CGRadio extends CGButton {
 		
 		public function CGRadio(src:* = null, name:String = null, lab:String = null, val:* = null, app:CGRadio = null) {
-			m_select = false;
-			m_value = val;
-			m_sibling = this;
+			mSelect = false;
+			mValue = val;
+			mSibling = this;
 			super(src, name, lab);
 			if (app)
 				radioAppend(app);
@@ -21,21 +21,21 @@
 		
 		/** Флаг включенного состояния радиокнопки */
 		public function get select():Boolean {
-			return m_select;
+			return mSelect;
 		}
 		
 		public function set select(val:Boolean):void {
-			if (m_select == val)
+			if (mSelect == val)
 				return;
-			m_select = val;
+			mSelect = val;
 			doState();
-			if (m_select) {
+			if (mSelect) {
 				// сбросить выбор со всех прочих радио в группе
-				var radio:CGRadio = m_sibling;
+				var radio:CGRadio = mSibling;
 				while (radio !== this) {
-					radio.m_select = false;
+					radio.mSelect = false;
 					radio.doState();
-					radio = radio.m_sibling;
+					radio = radio.mSibling;
 				}
 				broadcastSelect();
 			}
@@ -47,11 +47,11 @@
 		public function selectNext():void {
 			var radio:CGRadio = this;
 			do {
-				if (radio.m_select) {
-					radio.m_sibling.select = true;
+				if (radio.mSelect) {
+					radio.mSibling.select = true;
 					return;
 				}
-				radio = radio.m_sibling;
+				radio = radio.mSibling;
 			} while (radio !== this)
 			select = true;
 		}
@@ -61,31 +61,31 @@
 		public function selectPrev():void {
 			var radio:CGRadio = this;
 			do {
-				if (radio.m_sibling.m_select) {
+				if (radio.mSibling.mSelect) {
 					radio.select = true;
 					return;
 				}
-				radio = radio.m_sibling;
+				radio = radio.mSibling;
 			} while (radio !== this)
 			select = true;
 		}
 		
 		/** Связанное с данной кнопкой значение */
 		public function get value():* {
-			return m_value;
+			return mValue;
 		}
 		
 		public function set value(val:*):void {
-			m_value = val;
+			mValue = val;
 		}
 		
 		/** Текущее выбранное в группе значение */
 		public function get valueSelected():* {
 			var radio:CGRadio = this;
 			do {
-				if (radio.m_select)
-					return radio.m_value;
-				radio = radio.m_sibling;
+				if (radio.mSelect)
+					return radio.mValue;
+				radio = radio.mSibling;
 			} while (radio !== this)
 			return null;
 		}
@@ -93,11 +93,11 @@
 		public function set valueSelected(val:*):void {
 			var radio:CGRadio =  this;
 			do {
-				if (radio.m_value == val) {
+				if (radio.mValue == val) {
 					radio.select = true;
 					return;
 				}
-				radio = radio.m_sibling;
+				radio = radio.mSibling;
 			} while (radio !== this)
 		}
 		
@@ -105,9 +105,9 @@
 		public function get radioSelected():CGRadio {
 			var radio:CGRadio = this;
 			do {
-				if (radio.m_select)
+				if (radio.mSelect)
 					return radio;
-				radio = radio.m_sibling;
+				radio = radio.mSibling;
 			} while (radio !== this)
 			return null;
 		}
@@ -115,26 +115,26 @@
 		/** Добавить данную радиокнопку к группе других */
 		public function radioAppend(radio:CGRadio, val:* = null):void {
 			if (val != null)
-				m_value = val;
-			if (m_sibling !== this)
+				mValue = val;
+			if (mSibling !== this)
 				// если радиокнопка уже принадлежит другой группе, то сначала выйти из нее
 				radioRemove();
 			// дополнить кольцевой список
-			m_sibling = radio.m_sibling;
-			radio.m_sibling = this;
+			mSibling = radio.mSibling;
+			radio.mSibling = this;
 		}
 		
 		/** Удалить данную радиокнопку из группы других */
 		public function radioRemove():void {
-			if (m_sibling === this)
+			if (mSibling === this)
 				return;
 			// найти предыдущую кнопку в группе
-			var radio:CGRadio = m_sibling;
-			while (radio.m_sibling !== this)
-				radio = radio.m_sibling;
+			var radio:CGRadio = mSibling;
+			while (radio.mSibling !== this)
+				radio = radio.mSibling;
 			// изъять из кольцевого списка
-			radio.m_sibling = m_sibling;
-			m_sibling = this;
+			radio.mSibling = mSibling;
+			mSibling = this;
 		}
 		
 		override public function toString():String {
@@ -146,7 +146,7 @@
 		override protected function doStateValue():String {
 			return super.doStateValue() +
 				"_" +
-				(m_select ? STATE_SELECT : STATE_REGULAR);
+				(mSelect ? STATE_SELECT : STATE_REGULAR);
 		}
 		
 		override protected function doButtonClick():void {
@@ -156,8 +156,8 @@
 		
 		override protected function onDestroy():void {
 			radioRemove();
-			m_value = null;
-			m_sibling = null;
+			mValue = null;
+			mSibling = null;
 			super.onDestroy();
 		}
 		
@@ -170,16 +170,16 @@
 		private function broadcastSelect():void {
 			var radio:CGRadio = this;
 			do {
-				radio.eventSend(new CGEventSelect(CGEventSelect.SELECT, m_value));
-				radio = radio.m_sibling;
+				radio.eventSend(new CGEventSelect(CGEventSelect.SELECT, mValue));
+				radio = radio.mSibling;
 			} while (radio && radio !== this)
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_select:Boolean;
-		private var m_value:*;
-		private var m_sibling:CGRadio; // кольцевой однонаправленный список
+		private var mSelect:Boolean;
+		private var mValue:*;
+		private var mSibling:CGRadio; // кольцевой однонаправленный список
 		
 		private static const STATE_SELECT:String  = "select";
 		private static const STATE_REGULAR:String = "regular";

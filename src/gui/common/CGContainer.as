@@ -1,4 +1,4 @@
-﻿package ui.common {
+﻿package framework.gui {
 	
 	import flash.display.DisplayObject;
 	import flash.display.DisplayObjectContainer;
@@ -14,17 +14,17 @@
 	/**
 	 * Универсальный контейнер клипов
 	 * 
-	 * @version  1.0.19
+	 * @version  1.0.25
 	 * @author   meps
 	 */
 	public class CGContainer extends CGDispatcher implements IGSkinnable {
 		
 		public function CGContainer(src:* = null, name:String = null) {
-			m_const = new Dictionary();
-			m_icons = new Dictionary();
-			m_texts = new Dictionary();
-			m_textsAuto = new Dictionary();
-			m_placers = new Dictionary();
+			mConst = new Dictionary();
+			mIcons = new Dictionary();
+			mTexts = new Dictionary();
+			mTextsAuto = new Dictionary();
+			mPlacers = new Dictionary();
 			super();
 			if (src)
 				clipAppend(src, name);
@@ -32,18 +32,7 @@
 		
 		/** Деструктор */
 		public function destroy():void {
-			//log.write("#", "CGProto::destroy");
 			onDestroy();
-			m_clipInstance = null;
-			m_parent = null;
-			m_const = null;
-			m_icons = null;
-			m_texts = null;
-			m_textsAuto = null;
-			// удалить все плейсхолдеры
-			for each (var placer:TPlacerData in m_placers)
-				placer.target.destroy();
-			m_placers = null;
 		}
 		
 		/**
@@ -70,7 +59,7 @@
 		 */
 		public function clipAppend(src:*, name:String = null):void {
 			var mc:MovieClip;
-			if (m_clipInstance || m_parent)
+			if (mClipInstance || mParent)
 				// если клип уже существует, сначала удалить его
 				clipRemove();
 			if (src is MovieClip) {
@@ -80,25 +69,23 @@
 					mc = objectFind(name, mc) as MovieClip;
 				if (!mc) {
 					// пустой клип не может быть использован
-					//log.write("!", "CGProto::clipAppend", "Empty clip", src, name);
 					return;
 				}
 			} else if (src is CGContainer) {
 				// клип существующего родительского элемента интерфейса
 				var parent:CGContainer = src as CGContainer;
-				m_parent = parent;
-				//trace(printClass(this), "::clipAppend", "subscribe", printClass(m_parent));
-				m_parent.eventSign(true, UPDATE, doClipParent);
-				m_clipName = name;
-				mc = m_parent.objectFind(m_clipName) as MovieClip; // связанный с существующим элементом клип может и отсутствовать
+				mParent = parent;
+				mParent.eventSign(true, UPDATE, doClipParent);
+				mClipName = name;
+				mc = mParent.objectFind(mClipName) as MovieClip; // связанный с существующим элементом клип может и отсутствовать
 			} else if (src is Class) {
 				mc = new (src as Class)() as MovieClip;
 				if (!mc)
 					return;
 			} else if (src is String) {
 				// имя ресурса (пока совпадает с именем класса)
-				m_srcResource = String(src);
-				CGSkin.instance.connect(m_srcResource, this);
+				mSrcResource = String(src);
+				CGSkin.instance.connect(mSrcResource, this);
 				return;
 				/*
 				// имя класса
@@ -117,47 +104,43 @@
 				*/
 			} else {
 				// неведомый тип аргумента
-				//log.write("!", "CGProto::clipAppend", "Unknown argument type", src, name);
 				return;
 			}
 			doClipAppend(mc);
 			doClipProcess();
-			// FIX было в старой версии прототипа
-			//doClipAppend(mc);
-			//doClipState(m_state);
-			//doClipProcess();
-			//cast(new CGEvent(PARENT));
 		}
 		
 		/** Удалить клип */
 		public function clipRemove():void {
-			if (m_parent) {
-				m_parent.eventSign(false, UPDATE, doClipParent);
-				m_parent = null;
-				m_clipName = null;
+			if (mParent) {
+				mParent.eventSign(false, UPDATE, doClipParent);
+				mParent = null;
+				mClipName = null;
 			}
 			doClipRemove();
-			//cast(new CGEvent(PARENT));
 		}
 		
 		/** Прочитать значение константы из текстового поля */
 		public function constGet(name:String, bobbles:Boolean = false):String {
-			var result:String = m_const[name];
-			if (!result) {
+			if (!mConst)
+				return null;
+			
+			var result:String = mConst[name];
+			if (!result || bobbles) {
 				var t:TextField = objectFind(name) as TextField;
 				if (t) {
 					t.visible = false;
 					result = t.text.replace(CLEAN_CONST, ""); // удалить все служебные символы
-					m_const[name] = result;
+					mConst[name] = result;
 				} else {
 					// сохранить имя константы для отслеживания изменения ее значения
 					result = null;
-					m_const[name] = result;
-				}
-				// если константа не найдена то ищем ее у родителей
-				if (bobbles && m_parent && m_clipName) {
-					var findName:String = String(m_clipName + NAME_SPLITER + name).replace(/[^\w\$]/g, "");
-					result = m_parent.constGet(findName, bobbles);
+					// если константа не найдена то ищем ее у родителей
+					if (bobbles && mParent && mClipName) {
+						var findName:String = String(mClipName + NAME_SPLITER + name).replace(/[^\w\$]/g, "");
+						result = mParent.constGet(findName, bobbles);
+					}
+					mConst[name] = result;
 				}
 			}
 			return result;
@@ -165,45 +148,45 @@
 		
 		/** Чтение текстового поля */
 		public function textGet(id:String):String {
-			if (!m_texts.hasOwnProperty(id))
+			if (!mTexts.hasOwnProperty(id))
 				return null;
-			return m_texts[id];
+			return mTexts[id];
 		}
 		
 		/** Запись текстового поля */
 		public function textSet(text:String, id:String, auto:Boolean = false):void {
-			m_textsAuto[id] = auto;
-			if (m_texts.hasOwnProperty(id))
-				if (m_texts[id] == text)
+			mTextsAuto[id] = auto;
+			if (mTexts.hasOwnProperty(id))
+				if (mTexts[id] == text)
 					// содержание текста не менялось
 					return;
-			m_texts[id] = text;
+			mTexts[id] = text;
 			// обновлять только затронутые изменением текстовые поля
 			var tf:TextField = objectFind(id) as TextField;
 			if (tf)
-				onTextUpdate(tf, id, m_texts[id]);
+				onTextUpdate(tf, id, mTexts[id]);
 			eventSend(new CGEventChange(CGEventChange.TEXT, id));
 		}
 		
 		/** Чтение состояния иконки */
 		public function iconGet(id:String):String {
-			if (!(id in m_icons))
+			if (!(id in mIcons))
 				return null;
-			return m_icons[id];
+			return mIcons[id];
 		}
 		
 		/** Установка состояния иконки */
 		public function iconSet(state:String, id:String):void {
-			if (id in m_icons)
-				if (m_icons[id] == state)
+			if (id in mIcons)
+				if (mIcons[id] == state)
 					// состояние иконки не менялось
 					return;
-			m_icons[id] = state;
+			mIcons[id] = state;
 			// обновлять только затронутые изменением клипы иконок
 			var mc:MovieClip = objectFind(id) as MovieClip;
 			if (mc)
 				try {
-					mc.gotoAndStop(m_icons[id]);
+					mc.gotoAndStop(mIcons[id]);
 				} catch(error:Error) {
 					mc.stop();
 				}
@@ -213,18 +196,18 @@
 		/** Зарегистрировать плейсхолдер */
 		public function placerAttach(placerId:String, target:IGAligner, applyMatrix:Boolean = false, clipRect:Boolean = false, clipMask:Boolean = false):void {
 			var desc:TPlacerData;
-			if (placerId in m_placers) {
+			if (placerId in mPlacers) {
 				// удалить старый обработчик
-				desc = m_placers[placerId];
+				desc = mPlacers[placerId];
 				desc.target.destroy();
 				desc.placer = null;
 				desc.view = null;
 				desc.applyMatrix = applyMatrix;
-				desc.clipRect= clipRect;
+				desc.clipRect = clipRect;
 				desc.clipMask = clipMask;
 			} else {
 				desc = new TPlacerData(applyMatrix, clipRect, clipMask);
-				m_placers[placerId] = desc;
+				mPlacers[placerId] = desc;
 			}
 			desc.target = target;
 			placerRedraw(placerId);
@@ -232,20 +215,20 @@
 		
 		/** Удалить плейсхолдер */
 		public function placerDetach(placerId:String):void {
-			if (!(placerId in m_placers))
+			if (!(placerId in mPlacers))
 				return;
-			var desc:TPlacerData = m_placers[placerId];
+			var desc:TPlacerData = mPlacers[placerId];
 			desc.target.destroy();
-			delete m_placers[placerId];
+			delete mPlacers[placerId];
 		}
 		
 		/** Связанный с контроллером клип */
-		public function get clip():MovieClip { return m_clipInstance; }
+		public function get clip():MovieClip { return mClipInstance; }
 		
 		/** Посчитать количество занумерованных последовательно элементов по переданному префиксу */
 		public function objectCount(name:String, src:DisplayObjectContainer = null):int {
 			if (!src)
-				src = m_clipInstance;
+				src = mClipInstance;
 			if (!src)
 				return 0;
 			var count:int = 0;
@@ -261,47 +244,48 @@
 		// src = null -- искать в собственном клипе
 		public function objectFind(name:String, src:DisplayObjectContainer = null):DisplayObject {
 			if (!name)
-				return src ? src : m_clipInstance;
+				return src ? src : mClipInstance;
 			var container:DisplayObjectContainer;
 			if (src)
 				// передан конкретный контейнер
 				container = src;
-			else if (m_clipInstance)
+			else if (mClipInstance)
 				// искать по собственному клипу элемента
-				container = m_clipInstance;
+				container = mClipInstance;
 			else
 				// поиск заведомо невозможен
 				return null;
 			// собрать путь для поиска
-			var direct:Vector.<Boolean> = new Vector.<Boolean>(); // флаг поиска непосредственно по имени; сброшен -- поиск иерархический
-			var path:Vector.<String> = new Vector.<String>(); // имена объектов
+			mHelperDirect.length = 0; // флаг поиска непосредственно по имени; сброшен -- поиск иерархический
+			mHelperPath.length = 0; // имена объектов
 			SPLIT_PATH.lastIndex = 0;
 			var pathResult:Object = SPLIT_PATH.exec(name);
 			while (pathResult) {
 				var pathDirect:Boolean = String(pathResult[1]) == "."; // непосредственный поиск только если ведущая точка одна
-				direct.push(pathDirect);
+				mHelperDirect.push(pathDirect);
 				var pathName:String = String(pathResult[2]);
-				path.push(pathName);
+				mHelperPath.push(pathName);
 				pathResult = SPLIT_PATH.exec(name);
 			}
 			// поиск запрошенного объекта
 			var found:DisplayObject = null;
 			var depth:int = 0; // текущая глубина обхода
-			while (depth < path.length) {
+			while (depth < mHelperPath.length) {
 				if (!container)
 					// нарушена структура иерархии, например, промежуточное имя пути связано не с контейнером и дальнейшее углубление невозможно
 					return null;
-				pathDirect = direct[depth];
-				pathName = path[depth];
+				pathDirect = mHelperDirect[depth];
+				pathName = mHelperPath[depth];
 				if (pathDirect) {
 					// непосредственное имя объекта
 					found = container.getChildByName(pathName);
 				} else {
 					// иерархический поиск
-					var list:Vector.<DisplayObjectContainer> = new <DisplayObjectContainer>[ container ];
-					while (list.length) {
+					mHelperList.length = 0;
+					mHelperList[0] = container;
+					while (mHelperList.length) {
 						// обходить все вложенные контейнеры в поисках нужного элемента
-						container = list.pop();
+						container = mHelperList.pop();
 						found = container.getChildByName(pathName);
 						if (found)
 							// найден нужный элемент
@@ -310,7 +294,7 @@
 						for (var index:int = 0, len:int = container.numChildren; index < len; ++index) {
 							var child:DisplayObjectContainer = container.getChildAt(index) as DisplayObjectContainer;
 							if (child)
-								list.unshift(child);
+								mHelperList.unshift(child);
 						}
 					}
 				}
@@ -325,7 +309,7 @@
 		
 		/** Обработчис смены ресурса скина */
 		public function skinUpdate(resourceId:String, data:*):void {
-			if (resourceId == m_srcResource) {
+			if (resourceId == mSrcResource) {
 				var mc:MovieClip = data as MovieClip;
 				doClipAppend(mc);
 				doClipProcess();
@@ -336,27 +320,32 @@
 		
 		/** Стандартный обработчик каждого обновления текстового поля */
 		protected function onTextUpdate(field:TextField, textId:String, textValue:String):void {
-			doTextRefit(field, textValue, m_textsAuto[textId]);
+			doTextRefit(field, textValue, mTextsAuto[textId]);
 		}
 		
 		/** Обработчик деструктора элемента */
 		protected function onDestroy():void {
 			//clipRemove();
-			if (m_parent) {
-				// отписать обработчики от всех событий удаляемого элемента
-				m_parent.eventSign(false, UPDATE, doClipParent);
-				m_parent = null
+			eventClear();
+			// удалить все плейсхолдеры
+			for each (var placer:TPlacerData in mPlacers)
+				placer.target.destroy();
+			mPlacers = null;
+			// отписать обработчики от всех событий удаляемого элемента
+			if (mParent) {
+				mParent.eventSign(false, UPDATE, doClipParent);
+				mParent = null
 			}
 			// удалить регистрацию обработчика смены скина
-			if (m_srcResource) {
-				CGSkin.instance.disconnect(m_srcResource, this);
-				m_srcResource = null;
+			if (mSrcResource) {
+				CGSkin.instance.disconnect(mSrcResource, this);
+				mSrcResource = null;
 			}
-			m_const = null;
-			m_icons = null;
-			m_texts = null;
-			m_textsAuto = null;
-			eventClear();
+			mClipInstance = null;
+			mConst = null;
+			mIcons = null;
+			mTexts = null;
+			mTextsAuto = null;
 		}
 		
 		/** Обработчик добавления клипа */
@@ -370,7 +359,7 @@
 		/** Установить значения констант по умолчанию и тем самым инициировать
 		    дальнейшие запросы значений констант из текстовых полей */
 		protected function constDefault(name:String, value:String = null):void {
-			m_const[name] = value;
+			mConst[name] = value;
 		}
 		
 		/** Внутреннее обновление клипа в связи с изменением его состояния */
@@ -385,64 +374,62 @@
 		
 		/** Зарегистрировать новый клип */
 		protected function doClipAppend(mc:MovieClip):void {
-			//trace(printClass(this), "::doClipAppend", printClass(mc), "-->", printClass(m_clipInstance));
 			if (!mc) {
 				doClipRemove();
 				return;
 			}
-			if (mc === m_clipInstance)
+			if (mc === mClipInstance)
 				return;
-			m_clipInstance = mc;
-			onClipAppend(m_clipInstance);
+			mClipInstance = mc;
+			onClipAppend(mClipInstance);
 		}
 		
 		/** Удалить регистрацию клипа */
 		protected function doClipRemove():void {
-			//trace(printClass(this), "::doClipRemove", printClass(m_clipInstance));
-			if (m_clipInstance) {
-				onClipRemove(m_clipInstance);
-				m_clipInstance = null;
+			if (mClipInstance) {
+				onClipRemove(mClipInstance);
+				mClipInstance = null;
 			}
 		}
 		
 		/** Внутреннее обновление клипа в связи с изменением его состояния */
 		protected function doClipProcess():void {
 			var n:String, id:String;
-			if (m_clipInstance == null) {
-				for (n in m_const)
-					m_const[n] = null;
+			if (mClipInstance == null) {
+				for (n in mConst)
+					mConst[n] = null;
 				return;
 			}
 			// обновить значения констант
-			for (n in m_const) {
+			for (n in mConst) {
 				var t:TextField = objectFind(n) as TextField;
 				if (t) {
 					t.visible = false;
-					m_const[n] = t.text.replace(CLEAN_CONST, ""); // удалить все служебные символы
+					mConst[n] = t.text.replace(CLEAN_CONST, ""); // удалить все служебные символы
 				} else {
 					// отсутствие на клипе текстовых полей стирает прежние значения констант
 					//m_const[n] = null;
 				}
 			}
 			// обновить все иконки
-			for (id in m_icons) {
+			for (id in mIcons) {
 				var mc:MovieClip = objectFind(id) as MovieClip;
 				if (mc) {
 					try {
-						mc.gotoAndStop(m_icons[id]);
+						mc.gotoAndStop(mIcons[id]);
 					} catch(error:Error) {
 						mc.stop();
 					}
 				}
 			}
 			// обновить все тексты
-			for (id in m_texts) {
+			for (id in mTexts) {
 				var tf:TextField = objectFind(id) as TextField;
 				if (tf)
-					onTextUpdate(tf, id, m_texts[id]);
+					onTextUpdate(tf, id, mTexts[id]);
 			}
 			// обновить все плейсхолдеры
-			for (id in m_placers)
+			for (id in mPlacers)
 				placerRedraw(id);
 			// прочие специфические действия над контейнером
 			onClipProcess();
@@ -458,11 +445,10 @@
 		
 		/** Обработчик события изменения текста в поле ввода */
 		private function onTextChange(event:Event):void {
-			//log.write("onTextUpdate", (e.target as TextField).name, (e.target as TextField).text);
 			var tf:TextField = event.target as TextField;
 			var name:String = tf.name;
 			if (name) {
-				m_texts[name] = tf.text;
+				mTexts[name] = tf.text;
 				eventSend(new CGEventChange(CGEventChange.TEXT, name));
 			}
 		}
@@ -474,7 +460,7 @@
 			tf.defaultTextFormat = fmt;
 			if (tx != null)
 				tf.text = tx;
-			tf.removeEventListener(Event.CHANGE, onTextChange, false);
+			tf.removeEventListener(Event.CHANGE, onTextChange);
 			tf.addEventListener(Event.CHANGE, onTextChange, false, 0, true);
 			if (!tx)
 				// если текст не задан
@@ -499,7 +485,7 @@
 					tf.text = tf.text;
 					tw = tf.textWidth;
 					th = tf.textHeight;
-				}				
+				}
 			} else if (tw < w && th < h) {
 				// ... иначе, увеличивать шрифт до максимального заполнения на всю ширину
 				var b:Boolean = true;
@@ -539,7 +525,7 @@
 		/** Перерисовать плейсер */
 		private function placerRedraw(id:String):void {
 			var parent:DisplayObjectContainer;
-			var descr:TPlacerData = m_placers[id];
+			var descr:TPlacerData = mPlacers[id];
 			var placer:DisplayObject = objectFind(id);
 			var view:DisplayObject = descr.target.view;
 			// обработать отображение
@@ -611,36 +597,41 @@
 		////////////////////////////////////////////////////////////////////////
 		
 		/** Используемый в элементе клип, если он существует */
-		private var m_clipInstance:MovieClip;
+		private var mClipInstance:MovieClip;
 		
 		/** Используемый идентификатор ресурса скина */
-		private var m_srcResource:String;
+		private var mSrcResource:String;
+		
+		// хелперы при построении пути к объекту
+		private var mHelperDirect:Vector.<Boolean> = new Vector.<Boolean>();
+		private var mHelperPath:Vector.<String> = new Vector.<String>();
+		private var mHelperList:Vector.<DisplayObjectContainer> = new Vector.<DisplayObjectContainer>();
 		
 		/** Имя клипа */
-		protected var m_clipName:String;
+		protected var mClipName:String;
 		
 		/** Родительский элемент, который отслеживается */
-		protected var m_parent:CGContainer;
+		protected var mParent:CGContainer;
 		
 		/** Хранилище констант элемента */
-		private var m_const:Dictionary/*String*/;
+		private var mConst:Dictionary/*String*/;
 		
 		/** Карта текущих состояний иконок */
-		protected var m_icons:Dictionary/*String*/;
+		protected var mIcons:Dictionary/*String*/;
 		
 		/** Карта текстов ярлыков */
-		protected var m_texts:Dictionary;
+		protected var mTexts:Dictionary;
 		
 		/** Карта флагов автоматического выравнивания */
-		protected var m_textsAuto:Dictionary;
+		protected var mTextsAuto:Dictionary;
 		
 		/** Карта зарегистрированных плейсеров */
-		protected var m_placers:Dictionary;
+		protected var mPlacers:Dictionary;
 		
 		protected static const UPDATE:String = "$parent_update$";
 		
 		private static const CLEAN_CONST:RegExp = /[^\w\.]/g; // шаблон для очистки констант от служебных символов
-		private static const SPLIT_PATH:RegExp = /(^|\.+)([-\w]+)/g; // шаблон для разделения пути на элементы
+		private static const SPLIT_PATH:RegExp = /(^|\.+)([-$_\w]+)/g; // шаблон для разделения пути на элементы
 		private static const NAME_SPLITER:String = "$";
 		private static const SIZE_MIN:int = 8; // минимальный размер шрифта поля при автовыравнивании
 		
@@ -649,7 +640,7 @@
 }
 
 import flash.display.DisplayObject;
-import ui.common.IGAligner;
+import framework.gui.IGAligner;
 
 internal class TPlacerData {
 	

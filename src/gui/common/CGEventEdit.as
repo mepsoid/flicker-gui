@@ -1,9 +1,9 @@
-package ui.common {
+package framework.gui {
 	
 	/**
 	 * Событие изменения поля ввода текста
-	 * 
-	 * @version  1.0.1
+	 *
+	 * @version  1.0.2
 	 * @author   meps
 	 */
 	public class CGEventEdit extends CGEvent {
@@ -14,19 +14,22 @@ package ui.common {
 		/** Событие завершения ввода текста */
 		public static const COMPLETE:String = "edit_complete";
 		
+		/** Событие потери фокуса */
+		public static const UNFOCUS:String = "unfocus";
+		
 		public function CGEventEdit(type:String, text:String = null) {
 			super(type);
-			m_text = text;
+			mText = text;
 		}
 		
 		/** Текст поля ввода */
 		public function get text():String {
-			return m_text;
+			return mText;
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		private var m_text:String;
+		private var mText:String;
 		
 	}
 
