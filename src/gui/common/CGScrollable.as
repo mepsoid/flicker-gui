@@ -3,7 +3,7 @@ package ui.common {
 	/**
 	 * Контроллер скроллируемого списка
 	 * 
-	 * @version  1.0.9
+	 * @version  1.0.11
 	 * @author   meps
 	 */
 	public class CGScrollable extends CGProto {
@@ -41,7 +41,6 @@ package ui.common {
 				list = new Vector.<Object>();
 				for (index = 0; index < len; ++index)
 					list[index] = arr[index];
-				
 			} else if (data is Vector.<*>) {
 				var vec:Vector.<*> = data as Vector.<*>;
 				len = vec.length;

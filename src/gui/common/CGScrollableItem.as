@@ -1,40 +1,53 @@
 package ui.common {
 	
+	import flash.display.MovieClip;
+	
 	/**
 	 * Элемент скроллируемого списка
 	 * 
-	 * @version  1.0.2
+	 * @version  1.0.5
 	 * @author   meps
 	 */
 	public class CGScrollableItem extends CGInteractive {
 		
 		public function CGScrollableItem(src:* = null, name:String = null) {
-			m_enable = false;
+			m_data = null;
 			super(src, name);
 		}
 		
 		public function update(data:* = null):void {
-			m_data = data;
-			if (m_enable) {
+			if (m_data) {
+				// изменились только данные
+				m_data = data;
 				onUpdate();
 				return;
 			}
-			m_enable = true;
+			// изменилось и состояние
+			m_data = data;
 			doState();
 			onUpdate();
 		}
 		
 		public function clear():void {
-			if (!m_enable)
+			if (!m_data)
 				return;
-			m_enable = false;
+			// изменилось состояние
+			m_data = null;
 			doState();
 		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
 		override protected function doStateValue():String {
-			return m_enable ? COMMON_STATE : DISABLE_STATE;
+			return m_data ? COMMON_STATE : DISABLE_STATE;
+		}
+		
+		override protected function onStateFinish():void {
+			var hitMc:MovieClip = objectFind(HIT_ID) as MovieClip;
+			if (!hitMc)
+				hitMc = clip;
+			checkToHit(hitMc);
+			super.onStateFinish();
 		}
 		
 		protected function onUpdate():void {
@@ -42,7 +55,6 @@ package ui.common {
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		protected var m_enable:Boolean;
 		protected var m_data:*;
 		
 		private static const COMMON_STATE:String = "common";

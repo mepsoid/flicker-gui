@@ -1,6 +1,7 @@
 package ui.common {
 	
 	import flash.utils.Dictionary;
+	import flash.utils.setTimeout;
 	import services.printClass;
 	
 	/**
@@ -52,6 +53,7 @@ package ui.common {
 			var index:int = m_types.indexOf(event.type);
 			if (index < 0)
 				return false;
+			//setTimeout(onTimeout, 1, event);
 			var dict:Dictionary = m_listeners[index];
 			for each (var func:Function in dict)
 				func.call(this, event);
@@ -60,6 +62,15 @@ package ui.common {
 		
 		public function toString():String {
 			return printClass(this);
+		}
+		
+		////////////////////////////////////////////////////////////////////////
+		
+		private function onTimeout(event:CGEvent):void {
+			var index:int = m_types.indexOf(event.type);
+			var dict:Dictionary = m_listeners[index];
+			for each (var func:Function in dict)
+				func.call(this, event);
 		}
 		
 		////////////////////////////////////////////////////////////////////////

@@ -11,7 +11,7 @@ package ui.common {
 	/**
 	 * Трек бар на основе разделенных клипов
 	 * 
-	 * @version  1.0.4
+	 * @version  1.0.6
 	 * @author   meps
 	 */
 	public class CGTrackSeparate extends CGSeparate {
@@ -86,6 +86,16 @@ package ui.common {
 			m_step = val;
 		}
 		
+		/** Кнопка предыдущего значения */
+		public function get buttonPrev():CGButton {
+			return m_butPrev;
+		}
+		
+		/** Кнопка последующего значения */
+		public function get buttonNext():CGButton {
+			return m_butNext;
+		}
+		
 		////////////////////////////////////////////////////////////////////////
 		
 		override protected function onClipProcess():void {
@@ -95,12 +105,12 @@ package ui.common {
 			var area:InteractiveObject = objectFind(m_name + AREA_SUFFIX) as InteractiveObject;
 			if (m_clipArea !== area) {
 				if (m_clipArea) {
-					m_clipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseMove);
+					m_clipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
 					m_clipArea.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 				}
 				m_clipArea = area;
 				if (m_clipArea) {
-					m_clipArea.addEventListener(MouseEvent.MOUSE_DOWN, onMouseMove, false, 0, true);
+					m_clipArea.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown, false, 0, true);
 					m_clipArea.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
 				}
 			}
@@ -147,7 +157,7 @@ package ui.common {
 					stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 					stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
 				}
-				m_clipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseMove);
+				m_clipArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
 				m_clipArea.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 				m_clipArea = null;
 			}
@@ -240,11 +250,13 @@ package ui.common {
 		/** Обработчик кнопки назад */
 		private function onButtonPrev(event:CGEvent):void {
 			doPrevStep();
+			eventSend(new CGEvent(COMPLETE));
 		}
 		
 		/** Обработчик кнопки вперед */
 		private function onButtonNext(event:CGEvent):void {
 			doNextStep();
+			eventSend(new CGEvent(COMPLETE));
 		}
 		
 		/** Обработчик нажатия на бегунок */
@@ -281,7 +293,13 @@ package ui.common {
 			m_offsetRatio = 0.0;
 		}
 		
-		/** Обработчик нажатия на область и перемещения курсора мыши */
+		/** Обработчик нажатия на область */
+		private function onMouseDown(event:MouseEvent):void {
+			onMouseMove(event);
+			eventSend(new CGEvent(COMPLETE));
+		}
+		
+		/** Обработчик перемещения курсора мыши */
 		private function onMouseMove(event:MouseEvent):void {
 			if (!m_clipArea || !m_enable)
 				return;

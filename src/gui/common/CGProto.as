@@ -10,7 +10,7 @@
 	/**
 	 * Прототип элементов графического интерфейса
 	 *
-	 * @version  1.4.33
+	 * @version  1.4.36
 	 * @author   meps
 	 */
 	public class CGProto extends CGContainer {
@@ -142,7 +142,7 @@
 		
 		/** Сменить состояние со старого на новое */
 		protected function doClipState(stat:String, cont:Boolean = false):void {
-			// TODO cont -- задел на будущее, чтобы можно было плавно переносить анимации при смене клипов в парентах
+			// TODO cont -- задел на будущее, чтобы можно было плавно продолжать ведущиеся анимации переходов при смене клипов в парентах
 			//trace(this, "clipstate", stat, cont);
 			var frame:int;
 			if (!clip || !stat)
@@ -265,10 +265,12 @@
 			if (!clip)
 				return;
 			if (m_clipFrame == 0) {
+				clip.visible = false;
 				m_clipFrame = m_frame;
 				clip.gotoAndStop(m_frame);
 				onFrameConstructed();
 			} else if (m_clipFrame != m_frame) {
+				clip.visible = false;
 				m_clipFrame = m_frame;
 				clip.addEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed, false, 0, true);
 				clip.gotoAndStop(m_frame);
@@ -291,8 +293,9 @@
 				target.removeEventListener(Event.FRAME_CONSTRUCTED, onFrameConstructed);
 			}
 			doClipProcess();
-			//trace(this, "update C");
 			eventSend(new CGEvent(UPDATE));
+			clip.visible = true;
+			//trace(this, "update C");
 			if (m_frame != m_frameResult)
 				return;
 			// достигнут результирующий кадр

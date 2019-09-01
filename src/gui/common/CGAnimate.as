@@ -65,7 +65,7 @@ package ui.common {
 			m_framesList.length = 0;
 			m_framesName.length = 0;
 			if (mc) {
-				mc.gotoAndStop(1);
+				mc.stop();
 				// собрать кадры анимации по именам
 				var labelList:Array/*FrameLabel*/ = (mc.scenes[0] as Scene).labels as Array/*FrameLabel*/;
 				m_frameFinish = mc.totalFrames; // последний используемый кадр

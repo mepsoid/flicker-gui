@@ -16,10 +16,10 @@
 	/**
 	 * Класс загружаемой картинки
 	 * 
-	 * @version  1.1.26
+	 * @version  1.1.29
 	 * @author   meps
 	 */
-	public class CGImage extends CGInteractive {
+	public class CGImage extends CGInteractive implements IGImage {
 		
 		// если плейсера нет, то объект по нему не скейлится и не выравнивается
 		public function CGImage(src:* = null, name:String = null) {
@@ -41,11 +41,12 @@
 			m_image = null;
 			m_path = path;
 			doState();
-			CGImageProxy.instance.load(m_path, onImageLoad);
+			CGImageProxy.instance.load(m_path, this);
 		}
 		
 		/** Удалить изображение */
 		public function clear():void {
+			CGImageProxy.instance.unload(this);
 			removeImage();
 			m_load = false;
 			m_image = null;
@@ -67,6 +68,25 @@
 			}
 		}
 		*/
+		
+		/** Обработчик загруженной картинки */
+		public function imageUpdate(result:CGImageResult):void {
+			if (result.error || !m_load) {
+				// ошибка при загрузке изображения
+				removeImage();
+				m_load = false;
+				m_image = null;
+				doState();
+			} else {
+				m_load = false;
+				if (!m_image || m_image.bitmapData !== result.raster) {
+					removeImage();
+					m_image = result.create();
+				}
+				doState();
+				doRefit();
+			}
+		}
 		
 		////////////////////////////////////////////////////////////////////////
 		
@@ -93,24 +113,6 @@
 		
 		////////////////////////////////////////////////////////////////////////
 		
-		/** Обработчик загруженной картинки */
-		private function onImageLoad(image:CGImageResult):void {
-			m_load = false;
-			if (image.error) {
-				// ошибка при загрузке изображения
-				m_image = null;
-				doState();
-			} else {
-				var img:DisplayObject = image.data;
-				if (img !== m_image) {
-					removeImage();
-					m_image = img;
-				}
-				doState();
-				doRefit();
-			}
-		}
-		
 		/** Удаление изображения со сцены */
 		private function removeImage():void {
 			if (!m_image)
@@ -136,6 +138,7 @@
 			if (!m_image)
 				// отображать нечего
 				return;
+			m_image.mask = mask;
 			var parent:DisplayObjectContainer = mask.parent;
 			if (!parent.stage) {
 				// принудительное позиционирование по факту размещения родительского элемента на сцене 
@@ -144,7 +147,6 @@
 			}
 			parent.addChildAt(m_image, parent.getChildIndex(mask) + 1);
 			m_image.visible = true;
-			m_image.mask = mask;
 			var r:Rectangle;
 			var w:Number, h:Number, dw:Number, dh:Number, kw:Number, kh:Number;
 			var a:Number, b:Number, c:Number, d:Number, ow:Number, oh:Number;
@@ -354,7 +356,7 @@
 		private var m_rect:Rectangle;
 		
 		/** Собственный экземпляр изображения */
-		private var m_image:DisplayObject;
+		private var m_image:Bitmap;
 		
 		/** Путь к изображению */
 		private var m_path:String;

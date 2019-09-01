@@ -4,15 +4,15 @@ package ui.common {
 	import flash.geom.Matrix;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
-	import ui.common.CGLabel;
+	import ui.common.CGProto;
 	
 	/**
 	 * Текстовое поле со сбросим масштабирования
 	 * 
-	 * @version  1.0.1
+	 * @version  1.0.2
 	 * @author   meps
 	 */
-	public class CGLabelResizable extends CGLabel {
+	public class CGLabelResizable extends CGProto {
 		
 		public function CGLabelResizable(src:*= null, name:String = null) {
 			super(src, name);

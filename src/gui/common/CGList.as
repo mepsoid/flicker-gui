@@ -6,10 +6,10 @@ package ui.common {
 	/**
 	 * Список произвольных элементов с прокруткой
 	 * 
-	 * @version  1.0.2
+	 * @version  1.0.3
 	 * @author   meps
 	 */
-	public class CGList extends CGLabel {
+	public class CGList extends CGProto {
 		
 		public function CGList(src:* = null, name:String = null) {
 			super(src, name);

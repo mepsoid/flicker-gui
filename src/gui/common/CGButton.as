@@ -3,15 +3,13 @@
 	import flash.display.MovieClip;
 	import flash.events.MouseEvent;
 	import flash.events.TimerEvent;
-	import flash.geom.Point;
-	import flash.geom.Rectangle;
 	import flash.utils.Timer;
 	import services.printClass;
 
 	/**
 	 * Кнопка для графического интерфейса
 	 * 
-	 * @version  1.2.17
+	 * @version  1.2.18
 	 * @author   meps
 	 */
 	public class CGButton extends CGInteractive {
@@ -175,20 +173,6 @@
 				m_timer.stop();
 				m_timer.start();
 				doButtonClick();
-			}
-		}
-		
-		/** Наведена ли мышь на кнопку */
-		private function checkToHit(mc:MovieClip):void {
-			if (mc.stage) {
-				var rect:Rectangle = mc.getRect(mc.stage);
-				if (rect.contains(mc.stage.mouseX, mc.stage.mouseY)) {
-					m_over = mc.hitTestPoint(mc.mouseX, mc.mouseY, true);
-				} else {
-					m_over = false;
-				}
-			} else {
-				m_over = false;
 			}
 		}
 		

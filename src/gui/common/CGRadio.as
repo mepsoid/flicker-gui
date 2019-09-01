@@ -172,7 +172,7 @@
 			do {
 				radio.eventSend(new CGEventSelect(CGEventSelect.SELECT, m_value));
 				radio = radio.m_sibling;
-			} while (radio !== this)
+			} while (radio && radio !== this)
 		}
 		
 		////////////////////////////////////////////////////////////////////////

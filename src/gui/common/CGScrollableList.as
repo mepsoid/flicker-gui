@@ -6,7 +6,7 @@ package ui.common {
 	/**
 	 * Список скроллируемых элементов
 	 * 
-	 * @version  1.0.6
+	 * @version  1.0.7
 	 * @author   meps
 	 */
 	public class CGScrollableList extends CGResizable {
@@ -113,6 +113,11 @@ package ui.common {
 			if (index >= len)
 				return null;
 			return m_listData[index];
+		}
+		
+		/** Получить индекс в списке данных по экземпляру */
+		protected function dataToIndex(data:*):int {
+			return m_listData.indexOf(data);
 		}
 		
 		/** Перерисовка всего списка элементов */

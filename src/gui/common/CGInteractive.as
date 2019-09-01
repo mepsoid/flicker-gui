@@ -2,16 +2,16 @@
 	
 	import flash.display.MovieClip;
 	import flash.events.MouseEvent;
-	
+	import flash.geom.Rectangle;
 	import services.printClass;
 	
 	/**
 	 * Класс интерактивного элемента интерфейса
 	 * 
-	 * @version  1.0.5
+	 * @version  1.0.7
 	 * @author   meps
 	 */
-	public class CGInteractive extends CGLabel {
+	public class CGInteractive extends CGProto {
 		
 		public function CGInteractive(src:* = null, name:String = null) {
 			//log.write("#", "CGInteractive::constructor", src, name);
@@ -103,6 +103,20 @@
 				m_down = false;
 				doState();
 				eventSend(new CGEvent(CGEvent.UP));
+			}
+		}
+		
+		/** Наведена ли мышь на кнопку */
+		protected function checkToHit(mc:MovieClip):void {
+			if (mc && mc.stage) {
+				var rect:Rectangle = mc.getRect(mc.stage);
+				if (rect.contains(mc.stage.mouseX, mc.stage.mouseY)) {
+					m_over = mc.hitTestPoint(mc.mouseX, mc.mouseY, true);
+				} else {
+					m_over = false;
+				}
+			} else {
+				m_over = false;
 			}
 		}
 		
