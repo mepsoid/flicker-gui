@@ -640,7 +640,7 @@
 }
 
 import flash.display.DisplayObject;
-import framework.gui.IGAligner;
+import flicker.gui.IGAligner;
 
 internal class TPlacerData {
 	
