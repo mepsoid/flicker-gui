@@ -1,6 +1,6 @@
 ﻿package flicker.gui {
 	
-	import flicker.CGProtoWithRichText;
+	//import flicker.CGProtoWithRichText;
 	import flash.display.MovieClip;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
@@ -13,7 +13,7 @@
 	 * @version  1.0.10
 	 * @author   meps
 	 */
-	public class CGInteractive extends CGProtoWithRichText {
+	public class CGInteractive extends CGProto { // extends CGProtoWithRichText
 		
 		public function CGInteractive(src:* = null, name:String = null) {
 			mOver = false;
